@@ -29,6 +29,7 @@ class CashierPanelProvider extends PanelProvider
                 'primary' => Color::Green,
             ])
             ->login()
+            ->topNavigation()
             ->brandName('Cashier')
             ->discoverResources(in: app_path('Filament/Cashier/Resources'), for: 'App\\Filament\\Cashier\\Resources')
             ->discoverPages(in: app_path('Filament/Cashier/Pages'), for: 'App\\Filament\\Cashier\\Pages')
