@@ -3,17 +3,22 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
-use Filament\Actions;
+use App\Models\Product;
 use Filament\Resources\Pages\ListRecords;
 
 class ListProducts extends ListRecords
 {
     protected static string $resource = ProductResource::class;
 
-    protected function getHeaderActions(): array
+    protected static string $view = 'product-resource.pages.list-products';
+
+    public function getProducts()
     {
-        return [
-            Actions\CreateAction::make(),
-        ];
+        return Product::latest()->get();
+    }
+
+    public function isCashier(): bool
+    {
+        return auth()->check() && auth()->user()->role === 'cashier';
     }
 }

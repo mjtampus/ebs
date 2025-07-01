@@ -27,101 +27,106 @@ class UserResource extends Resource
         return static::getModel()::count();
     }
 
+    // ALLOWED DISPLAY IN THE PANNEL ADMIN ONLY
+    public static function canAccess(): bool
+    {
+        return auth()->check() && auth()->user()->role === 'admin';
+    }
 
-public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            Forms\Components\Grid::make(2)
-                ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->label('Full Name')
-                        ->required()
-                        ->maxLength(255),
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Full Name')
+                            ->required()
+                            ->maxLength(255),
 
-                    Forms\Components\TextInput::make('email')
-                        ->label('Email Address')
-                        ->email()
-                        ->required()
-                        ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email Address')
+                            ->email()
+                            ->required()
+                            ->maxLength(255),
+                    ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('password')
+                            ->label('Password')
+                            ->password()
+                            ->required()
+                            ->maxLength(255)
+                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            ->dehydrated(fn($state) => filled($state))
+                            ->autocomplete('new-password'),
+
+                        Forms\Components\Select::make('role')
+                            ->label('User Role')
+                            ->required()
+                            ->options([
+                                'admin' => 'Admin',
+                                'cashier' => 'Cashier',
+                            ]),
+                    ]),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('contact')
+                            ->label('Contact Number')
+                            ->tel()
+                            ->maxLength(15)
+                            ->required(),
+
+                        Forms\Components\Select::make('gender')
+                            ->label('Gender')
+                            ->options([
+                                'male' => 'Male',
+                                'female' => 'Female',
+                                'other' => 'Other',
+                            ])
+                            ->required(),
+                    ]),
+
+            ])
+            ->columns(1);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')->searchable(),
+                Tables\Columns\TextColumn::make('email')->searchable(),
+                Tables\Columns\TextColumn::make('email_verified_at')->dateTime()->sortable(),
+                Tables\Columns\SelectColumn::make('role')
+                    ->options([
+                        'admin' => 'Admin',
+                        'cashier' => 'Cashier',
+                    ]),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                Tables\Filters\SelectFilter::make('role')
+                    ->options([
+                        'admin' => 'Admin',
+                        'cashier' => 'Cashier',
+                    ]),
+            ])
+            ->headerActions([
+                // Tables\Actions\CreateAction::make(), // Enables modal-based "Create" action
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
-
-            Forms\Components\Grid::make(2)
-                ->schema([
-                    Forms\Components\TextInput::make('password')
-                        ->label('Password')
-                        ->password()
-                        ->required()
-                        ->maxLength(255)
-                        ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                        ->dehydrated(fn ($state) => filled($state))
-                        ->autocomplete('new-password'),
-
-                    Forms\Components\Select::make('role')
-                        ->label('User Role')
-                        ->required()
-                        ->options([
-                            'admin' => 'Admin',
-                            'cashier' => 'Cashier',
-                        ]),
-                ]),
-
-            Forms\Components\Grid::make(2)
-                ->schema([
-                    Forms\Components\TextInput::make('contact')
-                        ->label('Contact Number')
-                        ->tel()
-                        ->maxLength(15)
-                        ->required(),
-
-                    Forms\Components\Select::make('gender')
-                        ->label('Gender')
-                        ->options([
-                            'male' => 'Male',
-                            'female' => 'Female',
-                            'other' => 'Other',
-                        ])
-                        ->required(),
-                ]),
-
-        ])
-        ->columns(1);
-}
-
-public static function table(Table $table): Table
-{
-    return $table
-        ->columns([
-            Tables\Columns\TextColumn::make('name')->searchable(),
-            Tables\Columns\TextColumn::make('email')->searchable(),
-            Tables\Columns\TextColumn::make('email_verified_at')->dateTime()->sortable(),
-            Tables\Columns\SelectColumn::make('role')
-                ->options([
-                    'admin' => 'Admin',
-                    'cashier' => 'Cashier',
-                ]),
-            Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-            Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
-        ])
-        ->filters([
-            Tables\Filters\SelectFilter::make('role')
-                ->options([
-                    'admin' => 'Admin',
-                    'cashier' => 'Cashier',
-                ]),
-        ])
-        ->headerActions([
-            // Tables\Actions\CreateAction::make(), // Enables modal-based "Create" action
-        ])
-        ->actions([
-            Tables\Actions\EditAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
-}
+            ]);
+    }
 
 
     public static function getRelations(): array

@@ -22,7 +22,10 @@ class ProductCategoriesResource extends Resource
     protected static ?string $navigationGroup = 'Product Management';
     protected static ?string $navigationLabel = 'Categories';
     protected static ?int $navigationSort = 1;
-
+    public static function canAccess(): bool
+    {
+        return auth()->check() && auth()->user()->role === 'admin';
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -58,7 +61,7 @@ class ProductCategoriesResource extends Resource
                     ->label('Description')
                     ->searchable()
                     ->limit(40)
-                    ->tooltip(fn ($record) => $record->description),
+                    ->tooltip(fn($record) => $record->description),
 
                 TextColumn::make('created_at')
                     ->label('Created')

@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\ImageColumn;
-
+use Filament\Facades\Filament;
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
@@ -23,7 +23,19 @@ class ProductResource extends Resource
     protected static ?string $navigationGroup = 'Product Management';
     protected static ?string $navigationLabel = 'Products';
     protected static ?int $navigationSort = 2;
+    public static function getNavigationGroup(): ?string
+    {
+        return Filament::auth()->user()?->role === 'admin'
+            ? static::$navigationGroup
+            : 'Products';
+    }
 
+    public static function getNavigationLabel(): string
+    {
+        return Filament::auth()->user()?->role === 'admin'
+            ? static::$navigationLabel
+            : 'Start New Sale';
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -74,6 +86,7 @@ class ProductResource extends Resource
 
     public static function table(Table $table): Table
     {
+        $isAdmin = auth()->check() && auth()->user()->role === 'admin';
         return $table
             ->columns([
                 ImageColumn::make('image_path')
@@ -93,7 +106,7 @@ class ProductResource extends Resource
 
                 Tables\Columns\TextColumn::make('description')
                     ->limit(30)
-                    ->tooltip(fn ($record) => $record->description),
+                    ->tooltip(fn($record) => $record->description),
 
                 Tables\Columns\TextColumn::make('product_category.type')
                     ->label('Category')
@@ -118,7 +131,7 @@ class ProductResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()->visible($isAdmin),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
