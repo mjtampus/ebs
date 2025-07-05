@@ -23,6 +23,10 @@ class Product extends Model
     {
         return $this->belongsTo(ProductCategories::class , 'category_id');
     }
+    public function product_stock()
+    {
+        return $this->hasOne(ProductStock::class, 'product_id');
+    }
 
     protected static function booted()
     //if the productcode is empty will generate a random code
