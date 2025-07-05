@@ -2,22 +2,25 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProductResource\Pages;
-use App\Models\Product;
-use App\Models\ProductCategory;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Product;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\ProductCategory;
+use Filament\Resources\Resource;
+use Filament\Resources\Pages\Page;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Pages\SubNavigationPosition;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\ProductResource\Pages;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationGroup = 'Product Management';
@@ -119,6 +122,7 @@ class ProductResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make()
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -140,6 +144,17 @@ class ProductResource extends Resource
             'index' => Pages\ListProducts::route('/'),
             // 'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'stock' => Pages\ProductStock::route('/{record}/stock'),
         ];
+    }
+
+        public static function getRecordSubNavigation(Page $page): array
+    {
+        return $page->generateNavigationItems([
+
+                Pages\EditProduct::class,
+                Pages\ProductStock::class
+
+        ]);
     }
 }
