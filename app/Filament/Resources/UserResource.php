@@ -63,7 +63,8 @@ public static function form(Form $form): Form
                         ->options([
                             'admin' => 'Admin',
                             'cashier' => 'Cashier',
-                        ]),
+                        ])
+                        ->reactive(), // ← Make it reactive so dependent fields update
                 ]),
 
             Forms\Components\Grid::make(2)
@@ -84,6 +85,29 @@ public static function form(Form $form): Form
                         ->required(),
                 ]),
 
+            Forms\Components\Grid::make(3)
+                ->schema([
+                    Forms\Components\Select::make('shift')
+                        ->label('Shift')
+                        ->options([
+                            'day' => 'Day',
+                            'night' => 'Night',
+                        ])
+                        ->required()
+                        ->visible(fn (callable $get) => $get('role') === 'cashier'),
+
+                    Forms\Components\TimePicker::make('shift_start')
+                        ->label('Shift Start')
+                        ->required()
+                        ->default('08:00')
+                        ->visible(fn (callable $get) => $get('role') === 'cashier'),
+
+                    Forms\Components\TimePicker::make('shift_end')
+                        ->label('Shift End')
+                        ->required()
+                        ->default('17:00')
+                        ->visible(fn (callable $get) => $get('role') === 'cashier'),
+                ]),
         ])
         ->columns(1);
 }

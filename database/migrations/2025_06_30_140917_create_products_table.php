@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('description');
             $table->string('image_path');
             $table->string('category_id')->constrained('product_categories')->cascadeOnDelete();
+            $table->integer('unit_price')->default(0);
             $table->timestamps();
         });
     }
