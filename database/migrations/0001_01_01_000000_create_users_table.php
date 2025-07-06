@@ -20,6 +20,11 @@ return new class extends Migration
             $table->enum('role' , ['admin', 'cashier'])->default('cashier');
             $table->string('contact');
             $table->string('gender');
+            $table->enum('shift', ['day', 'night'])->default('day');
+            $table->time('shift_start')
+                ->default('08:00:00'); // Default start time for day shift
+            $table->time('shift_end')
+                ->default('17:00:00'); // Default end time for day shift
             $table->rememberToken();
             $table->timestamps();
         });

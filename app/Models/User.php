@@ -27,6 +27,9 @@ class User extends Authenticatable implements FilamentUser
         'role',
         'contact',
         'gender',
+        'shift',
+        'shift_start',
+        'shift_end',
     ];
 
     /**
@@ -69,5 +72,19 @@ public function canAccessPanel(Panel $panel): bool
         'cashier' => $this->role === 'cashier',
         default => false,
     };
+}   
+protected static function booted()
+{
+    static::saving(function (User $user) {
+        if ($user->role === 'cashier') {
+            if (
+                empty($user->shift) ||
+                empty($user->shift_start) ||
+                empty($user->shift_end)
+            ) {
+                throw new \InvalidArgumentException('Cashiers must have a shift, shift start, and shift end time.');
+            }
+        }
+    });
 }
 }
