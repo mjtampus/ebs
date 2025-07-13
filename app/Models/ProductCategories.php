@@ -13,6 +13,7 @@ class ProductCategories extends Model
     protected $fillable = [
         'type',
         'description',
+        'has_unit',
     ];
 
     public function products() :HasMany

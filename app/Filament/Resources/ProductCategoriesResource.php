@@ -41,6 +41,10 @@ class ProductCategoriesResource extends Resource
                                 ->required()
                                 ->maxLength(255),
                         ]),
+                        Forms\Components\Toggle::make('has_unit')
+                            ->label('Has Unit')
+                            ->default(false)
+                            ->helperText('Check if this category has units associated with it.'),
                     ]),
             ]);
     }

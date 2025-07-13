@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\ProductResource\Pages;
 
-use App\Filament\Resources\ProductResource;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\ProductResource;
 
 class ProductStock extends EditRecord
 {
@@ -14,7 +14,7 @@ class ProductStock extends EditRecord
 
     public static function getNavigationLabel(): string
     {
-        return 'Stock';
+        return 'Add Stock';
     }
 
     public function form(Form $form): Form
@@ -26,28 +26,52 @@ class ProductStock extends EditRecord
                     ->numeric()
                     ->minValue(0)
                     ->required()
+                    ->disabled()
                     ->afterStateHydrated(function (TextInput $component, $state) {
-                        // Set initial stock value from the relation
                         $component->state($this->record->product_stock->stock ?? null);
                     }),
             ]),
+        Section::make('Add Stock')->schema([
+            TextInput::make('add_stock')
+                ->label('Add Stock')
+                ->numeric()
+                ->minValue(1)
+                ->required(),
+        ]),            
         ]);
     }
 
-    protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
-    {
-        $stockData = $data['product_stock'];
-        $stockData['product_code'] = $record->code;
+protected function handleRecordUpdate(\Illuminate\Database\Eloquent\Model $record, array $data): \Illuminate\Database\Eloquent\Model
+{
+    $addStock = (int) ($data['add_stock'] ?? 0);
+    $productStock = $record->product_stock;
 
-        if ($record->product_stock) {
-            $record->product_stock->update($stockData);
-        } else {
-            $record->product_stock()->create($stockData);
-        }
+    if ($addStock > 0 && $productStock) {
+        $newStock = $productStock->stock + $addStock;
 
-        return $record;
+        $productStock->stockMovements()->create([
+            'product_code' => $record->code,
+            'quantity' => $addStock,
+            'movement_type' => 'in',
+        ]);
+
+        $productStock->update([
+            'stock' => $newStock,
+            'product_code' => $record->code,
+        ]);
+
+        $record->load('product_stock');
     }
 
+    return $record;
+}
+protected function afterSave(): void
+{
+    $this->form->fill([
+        'stock' => $this->record->product_stock->stock,
+        'add_stock' => null,
+    ]);
+}
     protected function hasHeader(): bool
     {
         return false;

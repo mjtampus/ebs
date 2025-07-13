@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('type');
             $table->string('description');
+            $table->boolean('has_unit')->default(false);
             $table->timestamps();
         });
     }

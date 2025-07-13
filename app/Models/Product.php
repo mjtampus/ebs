@@ -17,6 +17,7 @@ class Product extends Model
         'image_path',
         'category_id',
         'unit_price',
+        'unit',
     ];
 
     public function product_category() :BelongsTo
@@ -29,7 +30,6 @@ class Product extends Model
     }
 
     protected static function booted()
-    //if the productcode is empty will generate a random code
     {
         static::creating(function ($product) {
             if (empty($product->code)) {
