@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Models\ProductCategory;
 use Filament\Resources\Resource;
+use App\Models\ProductCategories;
 use Filament\Resources\Pages\Page;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
@@ -21,6 +22,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Pages\SubNavigationPosition;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ProductResource\Pages;
+use Filament\Forms\Components\Tabs\Tab;
 
 class ProductResource extends Resource
 {
@@ -31,6 +33,7 @@ class ProductResource extends Resource
     protected static ?string $navigationGroup = 'Product Management';
     protected static ?string $navigationLabel = 'Products';
     protected static ?int $navigationSort = 2;
+
 
 
 public static function form(Form $form): Form
@@ -68,6 +71,15 @@ public static function form(Form $form): Form
                         ->required()
                         ->maxLength(500),
 
+                    // Only visible during edit
+                    Select::make('category_id')
+                        ->label('Category')
+                        ->relationship('product_category', 'type')
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->hidden(fn (string $operation) => $operation === 'create'),
+
                     TextInput::make('unit_price')
                         ->label('Unit Price')
                         ->required()
@@ -88,13 +100,47 @@ public static function form(Form $form): Form
 
             // Step 3: Category & Stock
             Wizard\Step::make('Category & Stock')
+                ->hidden(fn (string $operation) => $operation === 'edit')
                 ->schema([
                     Select::make('category_id')
                         ->label('Category')
                         ->relationship('product_category', 'type')
                         ->searchable()
                         ->preload()
-                        ->required(),
+                        ->required()
+                        ->reactive(),
+
+                Section::make('Unit Details')
+                    ->visible(fn ($get) =>
+                        ProductCategories::find($get('category_id'))?->has_unit === 1
+                    )
+                    ->schema([
+                        Select::make('SI')
+                            ->label('SI Unit')
+                            ->options([
+                                'pcs' => 'Pieces',
+                                'kg' => 'Kilograms',
+                                'ltr' => 'Liters',
+                            ])
+                            ->default('pcs')
+                            ->reactive(),
+
+                        TextInput::make('unit')
+                            ->label('Quantity')
+                            ->numeric()
+                            ->visible(fn ($get) => filled($get('SI')))
+                            ->afterStateHydrated(function ($component, $state) {
+                                if (preg_match('/^\d+/', $state, $matches)) {
+                                    $component->state((int) $matches[0]);
+                                }
+                            })
+                            ->dehydrated()
+                            ->reactive()
+                            ->suffix(fn ($get) => $get('SI') ?? '')
+                            ->helperText('Enter the quantity and select the SI unit. This will be combined with the SI unit. For example, "10 pcs" or "5 kg".')
+                            ->extraAttributes(['inputmode' => 'numeric']),
+                        ]),
+
 
                     Section::make('Stock Information')
                         ->relationship('product_stock')
@@ -104,7 +150,9 @@ public static function form(Form $form): Form
                                 ->required()
                                 ->numeric()
                                 ->minValue(0)
-                                ->default(0),
+                                ->default(0)
+                                ->hidden(fn (string $operation) => $operation === 'edit'),
+
                             TextInput::make('product_code')
                                 ->label('Product Code')
                                 ->required()
@@ -114,10 +162,9 @@ public static function form(Form $form): Form
                         ]),
                 ]),
         ])
-        ->columnSpanFull(), // Ensures wizard expands full width inside modal
+        ->columnSpanFull(),
     ]);
 }
-
 
     public static function table(Table $table): Table
     {
@@ -147,7 +194,21 @@ public static function form(Form $form): Form
                     ->sortable()
                     ->badge()
                     ->color('info'),
-
+                Tables\Columns\TextColumn::make('product_stock.stock')
+                    ->label('Stock')
+                    ->sortable()
+                    ->numeric()
+                    ->color(fn ($state) => $state < 10 ? 'danger' : 'success'),
+                Tables\Columns\TextColumn::make('unit_price')
+                    ->label('Unit Price')
+                    ->sortable()
+                    ->money('PHP', true)
+                    ->color('primary'),
+                Tables\Columns\TextColumn::make('unit')
+                    ->label('Unit')
+                    ->sortable()
+                    ->badge()
+                    ->color('secondary'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('d M Y, h:i A')
@@ -162,7 +223,11 @@ public static function form(Form $form): Form
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('product_category_id')
+                    ->label('Category')
+                    ->relationship('product_category', 'type')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -186,7 +251,7 @@ public static function form(Form $form): Form
     {
         return [
             'index' => Pages\ListProducts::route('/'),
-            // 'create' => Pages\CreateProduct::route('/create'),
+            'create' => Pages\CreateProduct::route('/create'),
             'edit' => Pages\EditProduct::route('/{record}/edit'),
             'stock' => Pages\ProductStock::route('/{record}/stock'),
         ];
