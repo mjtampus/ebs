@@ -62,9 +62,9 @@
                             <div class="p-3 bg-red-500 text-white rounded shadow" id="clear-payment">C</div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2">
+                        <div class="grid grid-cols-1 gap-2 my-2">
                             {{-- <div class="p-3 bg-blue-500 text-white rounded shadow" id="add-payment">Add Payment</div> --}}
-                            <div class="p-3 bg-green-500 text-white rounded shadow" id="complete-payment">Complete
+                            <div class="p-3 bg-green-500 text-white rounded shadow w-full" id="complete-payment">Complete
                                 Payment</div>
                         </div>
                     </div>
