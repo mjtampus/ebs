@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Resources\ProductResource\Pages\CashierListProducts;
 
 class CashierPanelProvider extends PanelProvider
 {
@@ -31,10 +32,12 @@ class CashierPanelProvider extends PanelProvider
             ->login()
             ->topNavigation()
             ->brandName('Cashier')
-            ->discoverResources(in: app_path('Filament/Cashier/Resources'), for: 'App\\Filament\\Cashier\\Resources')
-            ->discoverPages(in: app_path('Filament/Cashier/Pages'), for: 'App\\Filament\\Cashier\\Pages')
+            ->resources([
+                \App\Filament\Cashier\Resources\CashierProductResource::class,
+            ])->discoverPages(in: app_path('Filament/Cashier/Pages'), for: 'App\\Filament\\Cashier\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                CashierListProducts::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Cashier/Widgets'), for: 'App\\Filament\\Cashier\\Widgets')
             ->widgets([
