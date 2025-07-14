@@ -30,7 +30,7 @@ class ProductResource extends Resource
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-    protected static ?string $navigationGroup = 'Product Management';
+    protected static ?string $navigationGroup = 'Inventory Management';
     protected static ?string $navigationLabel = 'Products';
     protected static ?int $navigationSort = 2;
 
@@ -100,7 +100,6 @@ public static function form(Form $form): Form
 
             // Step 3: Category & Stock
             Wizard\Step::make('Category & Stock')
-                ->hidden(fn (string $operation) => $operation === 'edit')
                 ->schema([
                     Select::make('category_id')
                         ->label('Category')
@@ -115,31 +114,40 @@ public static function form(Form $form): Form
                         ProductCategories::find($get('category_id'))?->has_unit === 1
                     )
                     ->schema([
-                        Select::make('SI')
-                            ->label('SI Unit')
-                            ->options([
-                                'pcs' => 'Pieces',
-                                'kg' => 'Kilograms',
-                                'ltr' => 'Liters',
-                            ])
-                            ->default('pcs')
-                            ->reactive(),
+                Select::make('SI')
+                    ->label('SI Unit')
+                    ->options([
+                        'pcs' => 'Pieces',
+                        'kg' => 'Kilograms',
+                        'ltr' => 'Liters',
+                    ])
+                    ->default('pcs')
+                    ->reactive()
+                    ->afterStateHydrated(function ($component, $state, callable $get, callable $set) {
+                        $unit = $get('unit');
+                        if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
+                            $si = strtolower($matches[1]);
+                            if (in_array($si, ['pcs', 'kg', 'ltr'])) {
+                                $set('SI', $si);
+                            }
+                        }
+                    }),
 
-                        TextInput::make('unit')
-                            ->label('Quantity')
-                            ->numeric()
-                            ->visible(fn ($get) => filled($get('SI')))
-                            ->afterStateHydrated(function ($component, $state) {
-                                if (preg_match('/^\d+/', $state, $matches)) {
-                                    $component->state((int) $matches[0]);
-                                }
-                            })
-                            ->dehydrated()
-                            ->reactive()
-                            ->suffix(fn ($get) => $get('SI') ?? '')
-                            ->helperText('Enter the quantity and select the SI unit. This will be combined with the SI unit. For example, "10 pcs" or "5 kg".')
-                            ->extraAttributes(['inputmode' => 'numeric']),
-                        ]),
+                TextInput::make('unit')
+                    ->label('Quantity')
+                    ->numeric()
+                    ->visible(fn ($get) => filled($get('SI')))
+                    ->afterStateHydrated(function ($component, $state) {
+                        if (preg_match('/^(\d+)/', $state, $matches)) {
+                            $component->state((int) $matches[1]);
+                        }
+                    })
+                    ->dehydrated()
+                    ->reactive()
+                    ->suffix(fn ($get) => $get('SI') ?? '')
+                    ->helperText('Enter the quantity and select the SI unit. This will be combined with the SI unit. For example, "10 pcs" or "5 kg".')
+                    ->extraAttributes(['inputmode' => 'numeric']),
+            ]),
 
 
                     Section::make('Stock Information')
@@ -194,11 +202,11 @@ public static function form(Form $form): Form
                     ->sortable()
                     ->badge()
                     ->color('info'),
-                Tables\Columns\TextColumn::make('product_stock.stock')
-                    ->label('Stock')
-                    ->sortable()
-                    ->numeric()
-                    ->color(fn ($state) => $state < 10 ? 'danger' : 'success'),
+                // Tables\Columns\TextColumn::make('product_stock.stock')
+                //     ->label('Stock')
+                //     ->sortable()
+                //     ->numeric()
+                //     ->color(fn ($state) => $state < 10 ? 'danger' : 'success'),
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Unit Price')
                     ->sortable()

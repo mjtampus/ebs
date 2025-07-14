@@ -19,7 +19,7 @@ class ProductCategoriesResource extends Resource
     protected static ?string $model = ProductCategories::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationGroup = 'Product Management';
+    protected static ?string $navigationGroup = 'Inventory Management';
     protected static ?string $navigationLabel = 'Categories';
     protected static ?int $navigationSort = 1;
 
