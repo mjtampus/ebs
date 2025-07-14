@@ -23,6 +23,11 @@ class ProductCategoriesResource extends Resource
     protected static ?string $navigationLabel = 'Categories';
     protected static ?int $navigationSort = 1;
 
+    public static function getNavigationBadge(): ?string
+    {
+        return ProductCategories::count() > 0 ? (string) ProductCategories::count() : null;
+    }
+
     public static function form(Form $form): Form
     {
         return $form
