@@ -57,7 +57,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'admin' || $this->role === 'staff';
     }
 
     public function isCashier(): bool
@@ -68,8 +68,8 @@ class User extends Authenticatable implements FilamentUser
 public function canAccessPanel(Panel $panel): bool
 {
     return match ($panel->getId()) {
-        'admin' => $this->role === 'admin',
-        'cashier' => $this->role === 'cashier',
+         'admin' => $this->isAdmin(),       
+            'cashier' => $this->isCashier(), 
         default => false,
     };
 }   

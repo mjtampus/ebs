@@ -30,7 +30,7 @@ class ProductResource extends Resource
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-    protected static ?string $navigationGroup = 'Product Management';
+    protected static ?string $navigationGroup = 'Inventory Management';
     protected static ?string $navigationLabel = 'Products';
     protected static ?int $navigationSort = 2;
 
@@ -100,7 +100,6 @@ class ProductResource extends Resource
 
                 // Step 3: Category & Stock
                 Wizard\Step::make('Category & Stock')
-                    ->hidden(fn(string $operation) => $operation === 'edit')
                     ->schema([
                         Select::make('category_id')
                             ->label('Category')
@@ -124,15 +123,24 @@ class ProductResource extends Resource
                                         'ltr' => 'Liters',
                                     ])
                                     ->default('pcs')
-                                    ->reactive(),
+                                    ->reactive()
+                                    ->afterStateHydrated(function ($component, $state, callable $get, callable $set) {
+                                        $unit = $get('unit');
+                                        if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
+                                            $si = strtolower($matches[1]);
+                                            if (in_array($si, ['pcs', 'kg', 'ltr'])) {
+                                                $set('SI', $si);
+                                            }
+                                        }
+                                    }),
 
                                 TextInput::make('unit')
                                     ->label('Quantity')
                                     ->numeric()
                                     ->visible(fn($get) => filled($get('SI')))
                                     ->afterStateHydrated(function ($component, $state) {
-                                        if (preg_match('/^\d+/', $state, $matches)) {
-                                            $component->state((int) $matches[0]);
+                                        if (preg_match('/^(\d+)/', $state, $matches)) {
+                                            $component->state((int) $matches[1]);
                                         }
                                     })
                                     ->dehydrated()
@@ -173,9 +181,8 @@ class ProductResource extends Resource
             ->columns([
                 ImageColumn::make('image_path')
                     ->label('Image')
-                    ->url(fn($record) => asset('storage/' . $record->image_path)) // full URL path
+                    ->url(fn($record) => asset('storage/' . $record->image_path))
                     ->getStateUsing(fn($record) => asset('storage/' . $record->image_path))
-
                     ->square()
                     ->circular(),
 
@@ -198,11 +205,11 @@ class ProductResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('info'),
-                Tables\Columns\TextColumn::make('product_stock.stock')
-                    ->label('Stock')
-                    ->sortable()
-                    ->numeric()
-                    ->color(fn($state) => $state < 10 ? 'danger' : 'success'),
+                // Tables\Columns\TextColumn::make('product_stock.stock')
+                //     ->label('Stock')
+                //     ->sortable()
+                //     ->numeric()
+                //     ->color(fn ($state) => $state < 10 ? 'danger' : 'success'),
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Unit Price')
                     ->sortable()
@@ -234,8 +241,8 @@ class ProductResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
+                Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -256,18 +263,21 @@ class ProductResource extends Resource
         return [
             'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
-            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            auth()->user()?->role !== 'staff' ? Pages\EditProduct::route('/{record}/edit') : null,
             'stock' => Pages\ProductStock::route('/{record}/stock'),
         ];
     }
 
     public static function getRecordSubNavigation(Page $page): array
     {
-        return $page->generateNavigationItems([
+        $items = [];
 
-            Pages\EditProduct::class,
-            Pages\ProductStock::class
+        if (auth()->user()?->role !== 'staff') {
+            $items[] = Pages\EditProduct::class;
+        }
 
-        ]);
+        $items[] = Pages\ProductStock::class;
+
+        return $page->generateNavigationItems($items);
     }
 }
