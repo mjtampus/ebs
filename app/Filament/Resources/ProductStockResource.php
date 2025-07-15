@@ -236,7 +236,7 @@ class ProductStockResource extends Resource
                     ->label('Add Stock')
                     ->modalHeading('Edit Product Stock')
                     ->successNotificationTitle('stock updated successfully')
-                    ->failureNotificationTitle('stock update failed')
+                    ->failureNotificationTitle('Failed to update stock')
                     ->form(function () {
                         return [
                             Forms\Components\Group::make([
@@ -249,6 +249,8 @@ class ProductStockResource extends Resource
 
                                 Forms\Components\TextInput::make('product_code')
                                     ->label('Product Code')
+                                    ->disabled()
+                                    ->dehydrated()
                                     ->required(),
                             ])->columns(2),
 
@@ -293,16 +295,22 @@ class ProductStockResource extends Resource
                     })
                     ->action(function (array $data, \App\Models\ProductStock $record, Action $action) {
                         $originalStock = $record->stock;
-
-                        if ($data['movement_type'] === 'in') {
+                    
+                        if ($data['movement_type'] === 'out') {
+                            if ($data['stock'] > $originalStock) {
+                                $action->failureNotificationMessage('The quantity you entered is greater than the current stock.');
+                                $action->failure();
+                                return;
+                            }
+                    
+                            $record->stock -= $data['stock'];
+                        } elseif ($data['movement_type'] === 'in') {
                             $record->stock += $data['stock'];
-                        } elseif ($data['movement_type'] === 'out') {
-                            $record->stock = max(0, $record->stock - $data['stock']);
                         }
-
+                    
                         $record->product_code = $data['product_code'];
                         $record->save();
-
+                    
                         \App\Models\StockMovements::create([
                             'product_id' => $record->product_id,
                             'product_stocks_id' => $record->id,
@@ -310,6 +318,7 @@ class ProductStockResource extends Resource
                             'movement_type' => $data['movement_type'],
                             'quantity' => $data['stock'],
                         ]);
+                    
                         $action->success();
                     })
             ])

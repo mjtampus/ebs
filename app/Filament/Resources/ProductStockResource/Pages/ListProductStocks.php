@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductStockResource\Pages;
 
 use App\Filament\Resources\ProductStockResource;
+use App\Filament\Resources\ProductStockResource\Widgets\ProductStockWidget;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
@@ -14,6 +15,13 @@ class ListProductStocks extends ListRecords
     {
         return [
             // Actions\CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+                ProductStockWidget::class
         ];
     }
 }

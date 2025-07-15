@@ -28,90 +28,107 @@ class UserResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\Grid::make(2)
-                    ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Full Name')
-                            ->required()
-                            ->maxLength(255),
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Forms\Components\Grid::make(2)
+                ->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Full Name')
+                        ->required()
+                        ->maxLength(255),
 
-                        Forms\Components\TextInput::make('email')
-                            ->label('Email Address')
-                            ->email()
-                            ->required()
-                            ->maxLength(255),
-                    ]),
+                    Forms\Components\TextInput::make('email')
+                        ->label('Email Address')
+                        ->email()
+                        ->required()
+                        ->maxLength(255),
+                ]),
 
-                Forms\Components\Grid::make(2)
-                    ->schema([
-                        Forms\Components\TextInput::make('password')
-                            ->label('Password')
-                            ->password()
-                            ->required()
-                            ->maxLength(255)
-                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
-                            ->dehydrated(fn($state) => filled($state))
-                            ->autocomplete('new-password'),
+            Forms\Components\Grid::make(2)
+                ->schema([
+                    Forms\Components\TextInput::make('password')
+                        ->label('Password')
+                        ->password()
+                        ->required()
+                        ->maxLength(255)
+                        ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                        ->dehydrated(fn ($state) => filled($state))
+                        ->autocomplete('new-password'),
 
-                        Forms\Components\Select::make('role')
-                            ->label('User Role')
-                            ->required()
-                            ->options([
-                                'admin' => 'Admin',
-                                'cashier' => 'Cashier',
-                                'staff' => 'Staff',
-                            ])
-                            ->reactive(), // ← Make it reactive so dependent fields update
-                    ]),
+                    Forms\Components\Select::make('role')
+                        ->label('User Role')
+                        ->required()
+                        ->options([
+                            'admin' => 'Admin',
+                            'cashier' => 'Cashier',
+                            'staff' => 'Staff',
+                        ])
+                        ->reactive(), // ← Make it reactive so dependent fields update
+                ]),
 
-                Forms\Components\Grid::make(2)
-                    ->schema([
-                        Forms\Components\TextInput::make('contact')
-                            ->label('Contact Number')
-                            ->tel()
-                            ->maxLength(15)
-                            ->required(),
+            Forms\Components\Grid::make(2)
+                ->schema([
+                    Forms\Components\TextInput::make('contact')
+                        ->label('Contact Number')
+                        ->tel()
+                        ->maxLength(15)
+                        ->required(),
 
-                        Forms\Components\Select::make('gender')
-                            ->label('Gender')
-                            ->options([
-                                'male' => 'Male',
-                                'female' => 'Female',
-                                'other' => 'Other',
-                            ])
-                            ->required(),
-                    ]),
+                    Forms\Components\Select::make('gender')
+                        ->label('Gender')
+                        ->options([
+                            'male' => 'Male',
+                            'female' => 'Female',
+                            'other' => 'Other',
+                        ])
+                        ->required(),
+                ]),
 
-                Forms\Components\Grid::make(3)
-                    ->schema([
-                        Forms\Components\Select::make('shift')
-                            ->label('Shift')
-                            ->options([
-                                'day' => 'Day',
-                                'night' => 'Night',
-                            ])
-                            ->required()
-                            ->visible(fn(callable $get) => $get('role') === 'cashier'),
+            Forms\Components\Grid::make(3)
+                ->schema([
+                    Forms\Components\Select::make('shift')
+                        ->label('Shift')
+                        ->options([
+                            'day' => 'Day',
+                            'night' => 'Night',
+                            'custom' => 'Custom',
+                        ])
+                        ->required()
+                        ->visible(fn (callable $get) => $get('role') === 'staff' || $get('role') === 'cashier')
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if ($state === 'custom') {
+                                $set('shift_start', null);
+                                $set('shift_end', null);
+                            } elseif ($state === 'day') {
+                                $set('shift_start', '09:00');
+                                $set('shift_end', '17:00');
+                            } elseif ($state === 'night') {
+                                $set('shift_start', '22:00');
+                                $set('shift_end', '06:00');
+                            }  
+                        }),
 
-                        Forms\Components\TimePicker::make('shift_start')
-                            ->label('Shift Start')
-                            ->required()
-                            ->default('08:00')
-                            ->visible(fn(callable $get) => $get('role') === 'cashier'),
+                    Forms\Components\TimePicker::make('shift_start')
+                        ->label('Shift Start')
+                        ->required()
+                        ->dehydrated()
+                        ->disabled(fn (callable $get) => $get('shift') !== 'custom')
+                        ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff'),
 
-                        Forms\Components\TimePicker::make('shift_end')
-                            ->label('Shift End')
-                            ->required()
-                            ->default('17:00')
-                            ->visible(fn(callable $get) => $get('role') === 'cashier'),
-                    ]),
-            ])
-            ->columns(1);
-    }
+
+                    Forms\Components\TimePicker::make('shift_end')
+                        ->label('Shift End')
+                        ->required()
+                        ->dehydrated()
+                        ->disabled(fn (callable $get) => $get('shift') !== 'custom')
+                        ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff'),
+                ]),
+        ])
+        ->columns(1);
+}
 
     public static function table(Table $table): Table
     {

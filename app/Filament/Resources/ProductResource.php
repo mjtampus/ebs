@@ -248,6 +248,7 @@ class ProductResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
                 Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
+                Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -285,4 +286,14 @@ class ProductResource extends Resource
 
         return $page->generateNavigationItems($items);
     }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
+    // public static function canEdit(): bool
+    // {
+    //     return auth()->user()?->role === 'admin';
+    // }
 }
