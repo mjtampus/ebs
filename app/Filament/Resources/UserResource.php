@@ -92,20 +92,37 @@ public static function form(Form $form): Form
                         ->options([
                             'day' => 'Day',
                             'night' => 'Night',
+                            'custom' => 'Custom',
                         ])
                         ->required()
-                        ->visible(fn (callable $get) => $get('role') === 'cashier'),
+                        ->visible(fn (callable $get) => $get('role') === 'cashier')
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if ($state === 'custom') {
+                                $set('shift_start', null);
+                                $set('shift_end', null);
+                            } elseif ($state === 'day') {
+                                $set('shift_start', '09:00');
+                                $set('shift_end', '17:00');
+                            } elseif ($state === 'night') {
+                                $set('shift_start', '22:00');
+                                $set('shift_end', '06:00');
+                            }  
+                        }),
 
                     Forms\Components\TimePicker::make('shift_start')
                         ->label('Shift Start')
                         ->required()
-                        ->default('08:00')
+                        ->dehydrated()
+                        ->disabled(fn (callable $get) => $get('shift') !== 'custom')
                         ->visible(fn (callable $get) => $get('role') === 'cashier'),
+
 
                     Forms\Components\TimePicker::make('shift_end')
                         ->label('Shift End')
                         ->required()
-                        ->default('17:00')
+                        ->dehydrated()
+                        ->disabled(fn (callable $get) => $get('shift') !== 'custom')
                         ->visible(fn (callable $get) => $get('role') === 'cashier'),
                 ]),
         ])
