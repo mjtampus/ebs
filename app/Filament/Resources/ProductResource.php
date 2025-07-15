@@ -244,18 +244,24 @@ class ProductResource extends Resource
                     ->relationship('product_category', 'type')
                     ->searchable()
                     ->preload(),
+                Tables\Filters\TrashedFilter::make(),    
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
                 Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\RestoreAction::make(),
+                Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
                 ]),
             ]);
     }
+            public static function getEloquentQuery(): Builder
+        {
+            return parent::getEloquentQuery()->withTrashed();
+        }
 
     public static function getRelations(): array
     {

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained('product_categories')->cascadeOnDelete();
             $table->integer('unit_price')->default(0);
             $table->string('unit')->default('pcs');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

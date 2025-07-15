@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Notifications\Notifiable;
@@ -12,14 +10,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -32,27 +24,44 @@ class User extends Authenticatable implements FilamentUser
         'shift_end',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'shift_start' => 'string',
+            'shift_end' => 'string',   
         ];
+    }
+
+    protected static function booted()
+    {
+        static::saving(function (User $user) {
+            \Log::info('User model saving:', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'shift' => $user->shift,
+                'shift_start' => $user->shift_start,
+                'shift_end' => $user->shift_end,
+                'dirty' => $user->getDirty(),
+                'original' => $user->getOriginal()
+            ]);
+        });
+
+        static::saved(function (User $user) {
+            \Log::info('User model saved:', [
+                'id' => $user->id,
+                'shift' => $user->shift,
+                'shift_start' => $user->shift_start,
+                'shift_end' => $user->shift_end,
+            ]);
+        });
     }
 
     public function isAdmin(): bool
@@ -65,26 +74,12 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'cashier';
     }
 
-public function canAccessPanel(Panel $panel): bool
-{
-    return match ($panel->getId()) {
-         'admin' => $this->isAdmin(),       
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return match ($panel->getId()) {
+            'admin' => $this->isAdmin(),       
             'cashier' => $this->isCashier(), 
-        default => false,
-    };
-}   
-protected static function booted()
-{
-    static::saving(function (User $user) {
-        if ($user->role === 'cashier') {
-            if (
-                empty($user->shift) ||
-                empty($user->shift_start) ||
-                empty($user->shift_end)
-            ) {
-                throw new \InvalidArgumentException('Cashiers must have a shift, shift start, and shift end time.');
-            }
-        }
-    });
-}
+            default => false,
+        };
+    }
 }

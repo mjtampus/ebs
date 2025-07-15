@@ -12,7 +12,7 @@ class ProductStockWidget extends BaseWidget
     {
         $totalStock = ProductStock::sum('stock');
     
-        $lowStockCount = ProductStock::where('stock', '<', 10)->count();
+        $lowStockCount = ProductStock::where('stock', '<=', 10)->count();
 
         $OutofStockCount = ProductStock::where('stock', '==', 0)->count();
     

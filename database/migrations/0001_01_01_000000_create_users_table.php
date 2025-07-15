@@ -20,7 +20,7 @@ return new class extends Migration
             $table->enum('role' , ['admin', 'cashier','staff'])->default('cashier');
             $table->string('contact');
             $table->string('gender');
-            $table->enum('shift', ['day', 'night'])->default('day')->nullable();
+            $table->string('shift')->nullable();
             $table->time('shift_start')
                 ->nullable()
                 ->default('08:00:00');

@@ -8,7 +8,7 @@ use App\Models\ProductStock;
 
 class StockChart extends ChartWidget
 {
-    protected static ?string $heading = 'Product Stock Chart';
+    protected static ?string $heading = 'Raw material stock levels';
 
     protected function getFilters(): ?array
     {
@@ -46,7 +46,6 @@ class StockChart extends ChartWidget
         $lowStockCount = $lowStockProducts->count();
         $outOfStockCount = $outOfStockProducts->count();
     
-        // Prepare label with product names
         $formatNames = fn($products) => $products
             ->map(fn($p) => $p->product->name ?? 'Unnamed')
             ->join(', ') ?: 'None';

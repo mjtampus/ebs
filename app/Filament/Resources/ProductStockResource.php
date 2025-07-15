@@ -156,8 +156,8 @@ class ProductStockResource extends Resource
                 Tables\Columns\ImageColumn::make('product.image_path')
                     ->label('Image')
                     ->label('Image')
-                    ->getStateUsing(fn($record) => asset('storage/' . $record->product->image_path))
-                    ->url(fn($record) => asset('storage/' . $record->product->image_path))
+                    ->getStateUsing(fn($record) => asset('storage/' . $record?->product?->image_path))
+                    ->url(fn($record) => asset('storage/' . $record?->product?->image_path))
                     ->circular()
                     ->sortable()
                 ,

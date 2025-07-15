@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('product_code');
             $table->integer('stock')->default(0);
+            $table->softDeletes();
             $table->timestamps();
         });
     }
