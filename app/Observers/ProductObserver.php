@@ -56,8 +56,6 @@ class ProductObserver
      */
     public function forceDeleted(Product $product): void
     {
-        // Optionally, you can also force delete the product stock if needed
-        $product->product_stock()->forceDelete();
-        $product->product_stock()->stockMovements()->forceDelete();
+        //
     }
 }

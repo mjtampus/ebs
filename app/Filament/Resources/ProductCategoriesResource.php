@@ -110,4 +110,9 @@ class ProductCategoriesResource extends Resource
             'edit' => Pages\EditProductCategories::route('/{record}/edit'),
         ];
     }
+
+    public static function canAccess() :bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
 }

@@ -38,22 +38,25 @@ class ProductStockWidget extends BaseWidget
     
         return [
             Stat::make('Total Items in Stock', number_format($totalStock))
-                ->descriptionIcon('heroicon-o-archive-box','before')
+                ->icon('heroicon-o-archive-box')
+                ->descriptionIcon('heroicon-o-arrow-trending-up')
                 ->chart($chartData->toArray())
                 ->description('Total number of items in stock')
                 ->chartColor('info')
                 ->color('success'),
     
             Stat::make('Low Stock Items', $lowStockCount)
-                ->icon('heroicon-o-exclamation-triangle')
+                ->icon('heroicon-o-exclamation-circle')
+                ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->chart([100, 35, 50, 75, 30, 20, 20])
                 ->description('Stocks below 10')
                 ->color('warning'),
 
             Stat::make('Out Of Stock', $OutofStockCount)
                 ->icon('heroicon-o-exclamation-triangle')
+                ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->chart([100, 35, 50, 75, 30, 20, 20])
-                ->description('Stocks below 10')
+                ->description('Stocks needed to be restocked')
                 ->color('danger'),    
         ];
     }

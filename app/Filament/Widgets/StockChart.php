@@ -9,6 +9,7 @@ use App\Models\ProductStock;
 class StockChart extends ChartWidget
 {
     protected static ?string $heading = 'Raw material stock levels';
+    protected static ?int $sort = 2;
 
     protected function getFilters(): ?array
     {

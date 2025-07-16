@@ -30,14 +30,24 @@ class CreateProduct extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (!empty($data['unit']) && isset($data['SI'])) {
-            $data['unit'] = $data['unit'] . ' ' . $data['SI'];
-        } elseif (isset($data['SI'])) {
-            $data['unit'] = $data['SI'];
+        if (!empty($data['unit'])) {
+            if (isset($data['SI']) && $data['SI'] === 'custom' && !empty($data['custom_unit'])) {
+                $data['unit'] = $data['unit'] . ' ' . $data['custom_unit'];
+            } elseif (isset($data['SI'])) {
+                $data['unit'] = $data['unit'] . ' ' . $data['SI'];
+            } else {
+                $data['unit'] = $data['unit'] . ' pcs';
+            }
         } else {
-            $data['unit'] = 'pcs';
+            if (isset($data['SI']) && $data['SI'] === 'custom' && !empty($data['custom_unit'])) {
+                $data['unit'] = $data['custom_unit'];
+            } elseif (isset($data['SI'])) {
+                $data['unit'] = $data['SI'];
+            } else {
+                $data['unit'] = 'pcs';
+            }
         }
-
+        
         return $data;
     }
 }

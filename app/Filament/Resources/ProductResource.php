@@ -39,8 +39,6 @@ class ProductResource extends Resource
         return Product::count() > 0 ? (string) Product::count() : null;
     }
 
-
-
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -126,11 +124,16 @@ class ProductResource extends Resource
                                         'pcs' => 'Pieces',
                                         'kg' => 'Kilograms',
                                         'ltr' => 'Liters',
+                                        'custom' => 'Custom',
                                     ])
                                     ->default('pcs')
                                     ->reactive()
                                     ->afterStateHydrated(function ($component, $state, callable $get, callable $set) {
                                         $unit = $get('unit');
+                                        if ($state === 'custom') {
+                                            return;
+                                        }
+                                        
                                         if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
                                             $si = strtolower($matches[1]);
                                             if (in_array($si, ['pcs', 'kg', 'ltr'])) {
@@ -138,6 +141,18 @@ class ProductResource extends Resource
                                             }
                                         }
                                     }),
+
+                                TextInput::make('custom_unit')
+                                ->label('Custom Unit')
+                                ->visible(fn($get) => $get('SI') === 'custom')
+                                ->reactive()
+                                ->afterStateHydrated(function ($component, $state, callable $get, callable $set) {
+                                    $unit = $get('unit');
+                                    if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
+                                        $custom_unit = $matches[1];
+                                        $set('custom_unit', $custom_unit);
+                                    }    
+                                }),
 
                                 TextInput::make('unit')
                                     ->label('Quantity')
@@ -150,7 +165,7 @@ class ProductResource extends Resource
                                     })
                                     ->dehydrated()
                                     ->reactive()
-                                    ->suffix(fn($get) => $get('SI') ?? '')
+                                    ->suffix(fn($get) => $get('SI') === 'custom' ? $get('custom_unit') : $get('SI'))
                                     ->helperText('Enter the quantity and select the SI unit. This will be combined with the SI unit. For example, "10 pcs" or "5 kg".')
                                     ->extraAttributes(['inputmode' => 'numeric']),
                             ]),
@@ -247,8 +262,8 @@ class ProductResource extends Resource
                 Tables\Filters\TrashedFilter::make(),    
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
-                Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role !== 'staff'),
+                Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
+                Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
                 Tables\Actions\RestoreAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
             ])
