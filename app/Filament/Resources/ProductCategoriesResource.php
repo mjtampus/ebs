@@ -2,17 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProductCategoriesResource\Pages;
-use App\Models\ProductCategories;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\Section;
+use Filament\Resources\Resource;
+use App\Models\ProductCategories;
 use Filament\Forms\Components\Grid;
+use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\ProductCategoriesResource\Pages;
 
 class ProductCategoriesResource extends Resource
 {
@@ -113,6 +114,6 @@ class ProductCategoriesResource extends Resource
 
     public static function canAccess() :bool
     {
-        return auth()->user()?->role === 'admin';
+        return Auth::user()->role === 'admin';
     }
 }

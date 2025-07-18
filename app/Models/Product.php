@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\ExpenseList;
 use App\Models\ProductCategories;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Product extends Model
@@ -27,7 +30,7 @@ class Product extends Model
     {
         return $this->belongsTo(ProductCategories::class , 'category_id');
     }
-    public function product_stock()
+    public function product_stock():HasOne
     {
         return $this->hasOne(ProductStock::class, 'product_id');
     }
@@ -40,5 +43,10 @@ class Product extends Model
                 $product->code = $prefix . '-' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             }
         });
+    }
+
+    public function expense(): HasMany
+    {
+        return $this->hasMany(ExpenseList::class);    
     }
 }

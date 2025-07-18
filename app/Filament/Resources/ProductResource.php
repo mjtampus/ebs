@@ -225,21 +225,19 @@ class ProductResource extends Resource
                     ->sortable()
                     ->badge()
                     ->color('info'),
-                // Tables\Columns\TextColumn::make('product_stock.stock')
-                //     ->label('Stock')
-                //     ->sortable()
-                //     ->numeric()
-                //     ->color(fn ($state) => $state < 10 ? 'danger' : 'success'),
+
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Unit Price')
                     ->sortable()
                     ->money('PHP', true)
                     ->color('primary'),
+
                 Tables\Columns\TextColumn::make('unit')
                     ->label('Unit')
                     ->sortable()
                     ->badge()
                     ->color('secondary'),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('d M Y, h:i A')
@@ -259,12 +257,14 @@ class ProductResource extends Resource
                     ->relationship('product_category', 'type')
                     ->searchable()
                     ->preload(),
-                Tables\Filters\TrashedFilter::make(),    
+                Tables\Filters\TrashedFilter::make()
+                    ->visible(fn() => auth()->user()?->role === 'admin'),    
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
                 Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
                 Tables\Actions\RestoreAction::make(),
+                Tables\Actions\ViewAction::make()->visible(fn() => auth()->user()?->role !== 'admin'),
                 Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
@@ -273,10 +273,7 @@ class ProductResource extends Resource
                 ]),
             ]);
     }
-            public static function getEloquentQuery(): Builder
-        {
-            return parent::getEloquentQuery()->withTrashed();
-        }
+    
 
     public static function getRelations(): array
     {
@@ -284,7 +281,6 @@ class ProductResource extends Resource
             // Define RelationManagers here (e.g., OrdersRelationManager::class)
         ];
     }
-
     public static function getPages(): array
     {
         return [
@@ -312,9 +308,4 @@ class ProductResource extends Resource
     {
         return auth()->user()?->role === 'admin';
     }
-
-    // public static function canEdit(): bool
-    // {
-    //     return auth()->user()?->role === 'admin';
-    // }
 }

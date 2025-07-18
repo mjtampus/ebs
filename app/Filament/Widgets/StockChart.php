@@ -5,12 +5,27 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 use App\Models\ProductStock;
+use Override;
 
 class StockChart extends ChartWidget
 {
-    protected static ?string $heading = 'Raw material stock levels';
+    public ?string $filter = 'today';
     protected static ?int $sort = 2;
-
+    #[Override]
+    public function getHeading(): ?string
+    {
+        return auth()->user()->role === 'admin' 
+            ? 'Raw material stock levels' 
+            : 'Product stock levels';
+    }
+    #[Override]
+    public function getDescription(): ?string
+    {
+        return auth()->user()->role === 'admin' 
+            ? 'All stock raw material levels' 
+            : 'All Product stock levels';
+    }
+    #[Override]
     protected function getFilters(): ?array
     {
         return [
@@ -19,14 +34,15 @@ class StockChart extends ChartWidget
             'all_time' => 'All Time',
         ];
     }
-
+    #[Override]
     protected function getData(): array
     {
         $filter = $this->filter;
+        $isAdmin = auth()->user()->role === 'admin';
     
         $stocksQuery = ProductStock::query()
-            ->whereHas('product.product_category', function ($query) {
-                $query->where('has_unit', 1);
+            ->whereHas('product.product_category', function ($query) use ($isAdmin) {
+                $query->where('has_unit', $isAdmin ? 1 : 0);
             })
             ->with('product');
     
@@ -65,8 +81,7 @@ class StockChart extends ChartWidget
                 'Out of Stock: ' . $formatNames($outOfStockProducts),
             ],
         ];
-    }    
-
+    }
     protected function getType(): string
     {
         return 'doughnut';

@@ -12,7 +12,7 @@ class ProductStockWidget extends BaseWidget
     {
         $totalStock = ProductStock::sum('stock');
     
-        $lowStockCount = ProductStock::where('stock', '<=', 10)->count();
+        $lowStockCount = ProductStock::whereBetween('stock', [1, 10])->count();
 
         $OutofStockCount = ProductStock::where('stock', '==', 0)->count();
     
@@ -50,16 +50,20 @@ class ProductStockWidget extends BaseWidget
                 ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->chart([100, 35, 50, 75, 30, 20, 20])
                 ->description('Stocks below 10')
-                ->color('warning'),
+                ->color('warning')
+                ->url(route('filament.admin.resources.product-stocks.index', [
+                    'tableFilters[stock_status][value]' => 'low_stock',
+                ])),
 
             Stat::make('Out Of Stock', $OutofStockCount)
                 ->icon('heroicon-o-exclamation-triangle')
                 ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->chart([100, 35, 50, 75, 30, 20, 20])
                 ->description('Stocks needed to be restocked')
-                ->color('danger'),    
+                ->color('danger')
+                ->url(route('filament.admin.resources.product-stocks.index', [
+                    'tableFilters[stock_status][value]' => 'out_of_stock',
+                ]))  
         ];
-    }
-    
-    
+    }       
 }

@@ -68,6 +68,8 @@ class ProductStockResource extends Resource
         return $table
             ->headerActions([
                 Action::make('create_stock')
+                    ->slideOver()
+                    ->modalDescription('Add a new product stock')
                     ->label('Add product stock')
                     ->modalHeading('Create New Product Stock')
                     ->form([
@@ -111,17 +113,21 @@ class ProductStockResource extends Resource
                         ])->columns(2),
 
                         Forms\Components\Placeholder::make('product_image_preview')
-                            ->label('Product Image')
-                            ->content(function ($get) {
-                                $image = $get('product_image');
-
-                                return $image
-                                    ? new HtmlString('<div class="py-2"><img src="' . asset('storage/' . $image) . '" class="w-64 rounded-xl shadow" /></div>')
-                                    : new HtmlString('');
-                            })
-                            ->visible(fn($get) => filled($get('product_image')))
-                            ->columnSpanFull()
-                            ->disableLabel(),
+                        ->label('Product Image')
+                        ->content(function ($get) {
+                            $image = $get('product_image');
+                    
+                            return $image
+                                ? new \Illuminate\Support\HtmlString(
+                                    '<div class="flex justify-center py-4">
+                                        <img src="' . asset('storage/' . $image) . '" class="w-52 h-52 object-cover rounded-xl shadow border" />
+                                    </div>'
+                                )
+                                : new HtmlString('');
+                        })
+                        ->visible(fn ($get) => filled($get('product_image')))
+                        ->columnSpanFull()
+                        ->disableLabel(),
                     ])
                     ->mutateFormDataUsing(function (array $data): array {
                         return $data;
@@ -173,7 +179,15 @@ class ProductStockResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock')
-                    ->color(fn($state) => $state < 10 ? 'danger' : 'success')
+                    ->color(function ($state) {
+                            if ($state === 0) {
+                                return 'danger';
+                            } elseif ($state <= 10 && $state > 0) {
+                                return 'warning';
+                            } else {
+                                return 'success';
+                            }
+                        })                      
                     ->numeric()
                     ->sortable(),
 
@@ -182,9 +196,9 @@ class ProductStockResource extends Resource
                     ->getStateUsing(function ($record) {
                         $stock = $record->stock;
 
-                        if ($stock <= 0)
+                        if ($stock === 0)
                             return 'Out of Stock';
-                        if ($stock < 10)
+                        if ($stock >= 0 && $stock <= 10)
                             return 'Low Stock';
                         return 'In Stock';
                     })
@@ -233,6 +247,7 @@ class ProductStockResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
+                    ->slideOver()
                     ->label('Add Stock')
                     ->modalHeading('Edit Product Stock')
                     ->successNotificationTitle('stock updated successfully')
@@ -327,7 +342,8 @@ class ProductStockResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultPaginationPageOption(5);
     }
 
     public static function getRelations(): array

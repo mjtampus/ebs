@@ -15,17 +15,21 @@ class UserInformationWidget extends BaseWidget
     {
         $user = auth()->user();
 
+        $isAdmin = ($user->role === 'admin') ? 'Admin Name' : 'Employee Name';
+
+        $color = ($user->role === 'admin') ? 'success' : 'info';
+
         $stats = [];
 
-        $stats[] = Stat::make('Employee Name', ucfirst($user->name) ?? 'N/A')
+        $stats[] = Stat::make($isAdmin, ucfirst($user->name) ?? 'N/A')
             ->description('Logged in as')
             ->descriptionIcon('heroicon-m-user')
-            ->color('info')
+            ->color($color)
             ->extraAttributes([
                 'class' => 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/50 dark:to-indigo-900/50',
             ]);
 
-        $stats[] = Stat::make('Role', ucfirst($user->role ?? 'Staff'))
+        $stats[] = Stat::make(($isAdmin === 'Admin Name' ? 'Role' : 'Employee Role'), ucfirst($user->role ?? 'Staff'))
             ->description('Access level')
             ->descriptionIcon('heroicon-m-shield-check')
             ->color($this->getRoleColor($user->role))
@@ -86,11 +90,14 @@ class UserInformationWidget extends BaseWidget
 
     protected function getWorkStatus(): string
     {
+        $timezone = config('app.timezone');
         $user = auth()->user();
-        $now = now();
+        $now = now($timezone);
 
-        $shiftStart = Carbon::parse($user->shift_start);
-        $shiftEnd = Carbon::parse($user->shift_end);
+        $shiftStart = Carbon::parse($user->shift_start)
+            ->timezone($timezone);
+        $shiftEnd = Carbon::parse($user->shift_end)
+            ->timezone($timezone);
 
         if ($now->between($shiftStart, $shiftEnd)) {
             return 'On Duty';
