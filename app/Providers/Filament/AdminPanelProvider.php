@@ -19,6 +19,7 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use App\Filament\Resources\ProductResource\Pages\CashierListProducts;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -37,7 +38,8 @@ class AdminPanelProvider extends PanelProvider
             ->topNavigation(fn () => auth()->user()?->role !== 'admin' ? true : false)
             ->colors(fn () => $this->auth()->user()?->role === 'admin' ? ['primary' => Color::Amber] : ['primary' => Color::Green])
             ->pages([
-                Pages\Dashboard::class, 
+                Pages\Dashboard::class,
+                   CashierListProducts::class, 
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

@@ -38,7 +38,8 @@ class ProductResource extends Resource
     {
         return Product::count() > 0 ? (string) Product::count() : null;
     }
-
+     
+    
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -288,6 +289,7 @@ class ProductResource extends Resource
             'create' => Pages\CreateProduct::route('/create'),
             auth()->user()?->role !== 'staff' ? Pages\EditProduct::route('/{record}/edit') : null,
             'stock' => Pages\ProductStock::route('/{record}/stock'),
+               'cashier' => Pages\CashierListProducts::route('/cashier'),
         ];
     }
 
