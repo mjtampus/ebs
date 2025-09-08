@@ -15,11 +15,11 @@ class ExpenseList extends Model
 
     protected $fillable = [ 
         'expense_name',
-        'is_raw',
-        'raw_materials_id',
-        'quantity','type',
+        'product_id',
+        'quantity',
+        'type',
         'unit_price',
-        'total_amount'
+        'total_amount',
     ];
 
     public function product() :BelongsTo

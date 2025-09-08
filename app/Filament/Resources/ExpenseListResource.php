@@ -34,102 +34,67 @@ class ExpenseListResource extends Resource
     {
         return $form
             ->schema([
-                Tabs::make('Expense Details')
-                    ->tabs([
-                        Tab::make('Raw Materials')
-                            ->icon('heroicon-o-newspaper')
-                            ->schema([
-                                Forms\Components\Select::make('product_id')
-                                    ->label('Raw Material')
-                                    ->relationship(
-                                        name: 'product',
-                                        titleAttribute: 'name',
-                                        modifyQueryUsing: fn ($query) =>
-                                            $query->whereHas('product_category', fn ($q) =>
-                                                $q->where('has_unit', 1)
-                                            )
-                                    )
-                                    ->required()
-                                    ->afterStateUpdated(function ($state, callable $set) {
-                                        if ($state) {
-                                            $product = Product::with('product_stock','product_category')->find($state);
-                                            $unitprice = $product->unit_price;
+                Forms\Components\Select::make('type')
+                    ->label('Expense Category')
+                    ->options([
+                        'Raw Material' => 'Raw Material',
+                        'Utility' => 'Utility',
+                        'Other' => 'Other',
+                    ])
+                    ->required()
+                    ->live(),
 
-                                            if ($product && $product->product_stock) {
-                                                $set('quantity', $product->product_stock->stock);
-                                                $set('unit_price', $unitprice);
-                                                $set('total_amount', $product->product_stock->stock * $unitprice);
-                                                $set('type', $product->product_category->type);
-                                                $set('expense_name', $product->name);
-                                            }                                
-                                        }
-                                    })
-                                    ->reactive(),                                
-                                Forms\Components\TextInput::make('expense_name')
-                                    ->required()
-                                    ->maxLength(255),
+                Forms\Components\Select::make('product_id')
+                    ->label('Raw Material')
+                    ->relationship(
+                        name: 'product',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn ($query) =>
+                            $query->whereHas('product_category', fn ($q) =>
+                                $q->where('has_unit', 1)
+                            )
+                    )
+                    ->visible(fn (callable $get) => $get('type') === 'Raw Material')
+                    ->required(fn (callable $get) => $get('type') === 'Raw Material')
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state) {
+                            $product = Product::with('product_category')->find($state);
+                            if ($product) {
+                                $set('unit_price', $product->unit_price ?? 0);
+                                $set('expense_name', $product->name);
+                                $set('type', $product->product_category->type ?? 'Raw Material');
+                            }
+                        }
+                    })
+                    ->reactive(),
 
-                                Forms\Components\TextInput::make('quantity')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->afterStateUpdated(fn ($state, callable $get, callable $set) => static::calculateTotal($get, $set))
-                                    ->numeric(),
-                                Forms\Components\TextInput::make('unit_price')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->afterStateUpdated(fn ($state, callable $get, callable $set) => static::calculateTotal($get, $set))
-                                    ->numeric(),
-                                Forms\Components\TextInput::make('total_amount')
-                                    ->disabled()
-                                    ->dehydrated()
-                                    ->required()
-                                    ->numeric(),
-                                Forms\Components\TextInput::make('type')
-                                    ->disabled()
-                                    ->dehydrated(),
-                            ]),
-    
-                            // Tab::make('Utilities')
-                            // ->icon('heroicon-o-bolt')
-                            // ->schema([
-                            //     Forms\Components\Repeater::make('utilities')
-                            //         ->label('Utility Items')
-                            //         ->schema([
-                            //             Forms\Components\TextInput::make('u_expense_name')
-                            //                 ->label('Expense Name')
-                            //                 ->required()
-                            //                 ->maxLength(255),
-                        
-                            //             Forms\Components\TextInput::make('u_type')
-                            //                 ->label('Type')
-                            //                 ->disabled()
-                            //                 ->default('Utility')
-                            //                 ->required()
-                            //                 ->live(),
-                        
-                            //             Forms\Components\TextInput::make('quantity')
-                            //                 ->numeric()
-                            //                 ->live()
-                            //                 ->reactive()
-                            //                 ->afterStateUpdated(fn ($state, callable $get, callable $set) => static::calculateTotal($get, $set)),
-                        
-                            //             Forms\Components\TextInput::make('unit_price')
-                            //                 ->numeric()
-                            //                 ->live()
-                            //                 ->reactive()
-                            //                 ->afterStateUpdated(fn ($state, callable $get, callable $set) => static::calculateTotal($get, $set)),
-                        
-                            //             Forms\Components\TextInput::make('total_amount')
-                            //                 ->label('Total Amount')
-                            //                 ->numeric()
-                            //                 ->disabled(),
-                            //         ])
-                            //         ->columns(2)
-                            //         ->createItemButtonLabel('Add another')
-                            //         ->defaultItems(1),
-                            // ])                        
-                        
-                    ])->columnSpanFull(),
+                Forms\Components\TextInput::make('expense_name')
+                    ->required(fn (callable $get) => $get('type') !== 'Raw Material')
+                    ->disabled(fn (callable $get) => $get('type') === 'Raw Material')
+                    ->maxLength(255),
+
+                Forms\Components\TextInput::make('quantity')
+                    ->numeric()
+                    ->default(1)
+                    ->minValue(0)
+                    ->required()
+                    ->live()
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state, callable $get, callable $set) => static::calculateTotal($get, $set)),
+
+                Forms\Components\TextInput::make('unit_price')
+                    ->numeric()
+                    ->minValue(0)
+                    ->required()
+                    ->live()
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state, callable $get, callable $set) => static::calculateTotal($get, $set)),
+
+                Forms\Components\TextInput::make('total_amount')
+                    ->disabled()
+                    ->dehydrated()
+                    ->required()
+                    ->numeric(),
             ]);
     }
 
@@ -149,7 +114,7 @@ class ExpenseListResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_amount')
                     ->numeric()
-                    ->summarize(Sum::make()->money('php)'))
+                    ->summarize(Sum::make()->money('php'))
                     ->money('php')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('deleted_at')
@@ -242,7 +207,7 @@ class ExpenseListResource extends Resource
     {
         return [
             'index' => Pages\ListExpenseLists::route('/'),
-            // 'create' => Pages\CreateExpenseList::route('/create'),
+            'create' => Pages\CreateExpenseList::route('/create'),
             'edit' => Pages\EditExpenseList::route('/{record}/edit'),
         ];
     }
