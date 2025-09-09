@@ -69,8 +69,9 @@ class ExpenseListResource extends Resource
                     ->reactive(),
 
                 Forms\Components\TextInput::make('expense_name')
-                    ->required(fn (callable $get) => $get('type') !== 'Raw Material')
-                    ->disabled(fn (callable $get) => $get('type') === 'Raw Material')
+                    ->required()
+                    ->disabled()    
+                    ->dehydrated(fn (callable $get) => $get('type') === 'Raw Material')
                     ->maxLength(255),
 
                 Forms\Components\TextInput::make('quantity')

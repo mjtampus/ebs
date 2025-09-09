@@ -31,12 +31,12 @@ class ProductStock extends EditRecord
                         $component->state($this->record->product_stock->stock ?? null);
                     }),
             ]),
-        Section::make('Add Stock')->schema([
-            TextInput::make('add_stock')
-                ->label('Add Stock')
-                ->numeric()
-                ->minValue(1)
-                ->required(),
+            Section::make('Add Stock')->schema([
+                TextInput::make('add_stock')
+                    ->label('Add Stock')
+                    ->numeric()
+                    ->minValue(1)
+                    ->required(),
         ]),            
         ]);
     }
