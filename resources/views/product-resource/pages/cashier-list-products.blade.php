@@ -10,14 +10,14 @@
     </script>
     @endscript
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border ">
         <div class="grid grid-cols-1 gap-4">
             <!-- Order Area -->
-            <div class="bg-gray-100 p-4 rounded-lg">
+            <div class=" p-4 rounded-lg">
                 <h2 class="font-bold text-lg mb-2">Current Order Area</h2>
                 <table class="w-full border-collapse">
                     <thead>
-                        <tr class="bg-gray-200">
+                        <tr class="bg-gray-500 text-white">
                             <th class="p-2 text-left">Qty</th>
                             <th class="p-2 text-left">Product Name</th>
                             <th class="p-2 text-left">Unit Price (PHP)</th>
@@ -34,7 +34,7 @@
             </div>
 
             <!-- Payment Calculator -->
-            <div class="bg-gray-100 p-4 rounded-lg">
+            <div class=" p-4 rounded-lg">
                 <h2 class="font-bold text-lg mb-2">Payment Calculator</h2>
                 <div class="mb-4">
                     <div class="flex justify-between mb-2">
@@ -52,17 +52,17 @@
                 </div>
 
                 <div class="grid grid-cols-4 gap-2">
-                    <div class="p-3 bg-white rounded shadow payment-btn">1</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">2</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">3</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">4</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">5</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">6</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">7</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">8</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">9</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">.</div>
-                    <div class="p-3 bg-white rounded shadow payment-btn">0</div>
+                    <div class="p-3  rounded shadow payment-btn">1</div>
+                    <div class="p-3  rounded shadow payment-btn">2</div>
+                    <div class="p-3  rounded shadow payment-btn">3</div>
+                    <div class="p-3  rounded shadow payment-btn">4</div>
+                    <div class="p-3  rounded shadow payment-btn">5</div>
+                    <div class="p-3  rounded shadow payment-btn">6</div>
+                    <div class="p-3  rounded shadow payment-btn">7</div>
+                    <div class="p-3  rounded shadow payment-btn">8</div>
+                    <div class="p-3  rounded shadow payment-btn">9</div>
+                    <div class="p-3  rounded shadow payment-btn">.</div>
+                    <div class="p-3  rounded shadow payment-btn">0</div>
                     <div class="p-3 bg-red-500 text-white rounded shadow" id="clear-payment">C</div>
                     <div class="p-3 bg-yellow-500 text-white rounded shadow" id="backspace-payment">←</div>
                 </div>
@@ -77,7 +77,7 @@
         </div>
 
         <!-- Product Selection Area -->
-        <div class="bg-gray-100 p-4 mt-4 rounded-lg">
+        <div class=" p-4 mt-4 rounded-lg">
             <h2 class="font-bold text-lg mb-2">Product Selection Area</h2>
             <div class="mb-4">
                 @php
@@ -93,14 +93,22 @@
                         </span>
                     @endforeach
                 </div>
-                <input type="text" placeholder="Search Product..." class="w-full p-2 border rounded"
-                    id="product-search">
+<input
+    type="text"
+    placeholder="Search Product..."
+    id="product-search"
+    class="w-full p-2 border rounded
+           bg-white text-black
+           dark:bg-gray-800 dark:text-white
+           placeholder-gray-400 dark:placeholder-gray-300"
+/>
+
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4" id="product-grid">
                 @foreach ($this->getProducts() as $product)
                     @if ($product->unit === 'pcs')
-                        <div class="bg-white shadow rounded-lg p-4 cursor-pointer product-item" data-id="{{ $product->id }}"
+                        <div class=" shadow rounded-lg p-4 cursor-pointer product-item" data-id="{{ $product->id }}"
                             data-name="{{ $product->name }}" data-price="{{ $product->unit_price }}"
                             data-category-id="{{ $product->category_id }}">
 
