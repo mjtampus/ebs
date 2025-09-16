@@ -33,13 +33,18 @@ class ProductResource extends Resource
     protected static ?string $navigationGroup = 'Inventory Management';
     protected static ?string $navigationLabel = 'Products';
     protected static ?int $navigationSort = 2;
-
+    
     public static function getNavigationBadge(): ?string
     {
         return Product::count() > 0 ? (string) Product::count() : null;
     }
      
-    
+public static function shouldRegisterNavigation(): bool
+{
+    return in_array(auth()->user()?->role, ['admin', 'staff']);
+}
+
+
     public static function form(Form $form): Form
     {
         return $form->schema([

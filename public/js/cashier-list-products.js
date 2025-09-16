@@ -27,8 +27,101 @@ document.addEventListener('livewire:init', () => {
         updateOrderDisplay();
         updatePaymentDisplay();
 
-        // Event listeners
-        productItems.forEach((item) => {
+        // ============ KEYBOARD EVENT LISTENERS ============
+        document.addEventListener("keydown", function(event) {
+            // Only handle keyboard input when not typing in search box
+            if (document.activeElement === productSearch) return;
+            
+            const key = event.key;
+            
+            // Handle numbers (0-9)
+            if (/^[0-9]$/.test(key)) {
+                event.preventDefault();
+                paymentInput += key;
+                updatePaymentDisplay();
+                return;
+            }
+            
+            // Handle decimal point
+            if (key === "." && !paymentInput.includes(".")) {
+                event.preventDefault();
+                paymentInput += ".";
+                updatePaymentDisplay();
+                return;
+            }
+            
+            // Handle Backspace
+            if (key === "Backspace") {
+                event.preventDefault();
+                paymentInput = paymentInput.slice(0, -1);
+                updatePaymentDisplay();
+                return;
+            }
+            
+            // Handle Delete or Clear (Delete key or Escape)
+            if (key === "Delete" || key === "Escape") {
+                event.preventDefault();
+                paymentInput = "";
+                paymentAmount = 0;
+                updatePaymentDisplay();
+                return;
+            }
+            
+            // Handle Enter to complete payment
+            if (key === "Enter") {
+                event.preventDefault();
+                if (!completePaymentButton.disabled) {
+                    processPayment();
+                }
+                return;
+            }
+            
+            // Handle F1-F9 for quick product selection (first 9 products)
+            if (event.key.startsWith('F') && event.key.length === 2) {
+                const fNumber = parseInt(event.key.substring(1));
+                if (fNumber >= 1 && fNumber <= 9) {
+                    event.preventDefault();
+                    const productIndex = fNumber - 1;
+                    if (productItems[productIndex]) {
+                        productItems[productIndex].click();
+                    }
+                }
+                return;
+            }
+            
+            // Handle Ctrl+Z for removing last item from order
+            if (event.ctrlKey && key === "z") {
+                event.preventDefault();
+                if (currentOrder.length > 0) {
+                    currentOrder.pop();
+                    updateOrderDisplay();
+                }
+                return;
+            }
+            
+            // Handle Ctrl+A for clearing entire order
+            if (event.ctrlKey && key === "a") {
+                event.preventDefault();
+                if (currentOrder.length > 0 && confirm("Clear entire order?")) {
+                    currentOrder = [];
+                    updateOrderDisplay();
+                }
+                return;
+            }
+        });
+
+        // Prevent search box from losing focus when using keyboard shortcuts
+        productSearch.addEventListener("blur", function() {
+            // Small delay to allow keyboard shortcuts to work
+            setTimeout(() => {
+                if (!document.activeElement || document.activeElement === document.body) {
+                    // Don't auto-focus if user clicked somewhere else intentionally
+                }
+            }, 100);
+        });
+
+        // ============ EXISTING EVENT LISTENERS ============
+        productItems.forEach((item, index) => {
             item.addEventListener("click", function () {
                 const product = {
                     id: this.dataset.id,
@@ -38,6 +131,16 @@ document.addEventListener('livewire:init', () => {
                 };
                 addToOrder(product);
             });
+            
+            // Add F-key hint to first 9 products
+            if (index < 9) {
+                const fKeyHint = document.createElement('div');
+                fKeyHint.className = 'absolute top-1 right-1 bg-blue-500 text-white text-xs px-1 rounded';
+                fKeyHint.textContent = `F${index + 1}`;
+                fKeyHint.style.fontSize = '10px';
+                item.style.position = 'relative';
+                item.appendChild(fKeyHint);
+            }
         });
 
         paymentButtons.forEach((button) => {
@@ -224,6 +327,13 @@ document.addEventListener('livewire:init', () => {
                 completePaymentButton.classList.remove("opacity-50", "cursor-not-allowed");
                 completePaymentButton.classList.add("opacity-100");
             }
+            
+            // Visual feedback for current payment input
+            if (paymentInput) {
+                displayReceived.parentElement.classList.add("bg-yellow-500");
+            } else {
+                displayReceived.parentElement.classList.remove("bg-yellow-500");
+            }
         }
 
         function calculateTotal() {
@@ -240,5 +350,42 @@ document.addEventListener('livewire:init', () => {
                 item.style.display = matchesSearch && matchesCategory ? "block" : "none";
             });
         }
+
+        // ============ SHOW KEYBOARD SHORTCUTS HELP ============
+        function showKeyboardHelp() {
+            alert(`Keyboard Shortcuts:
+            
+PAYMENT:
+• 0-9: Enter payment amount
+• . (dot): Add decimal point
+• Backspace: Delete last digit
+• Delete/Escape: Clear payment
+• Enter: Complete payment
+
+PRODUCTS:
+• F1-F9: Add first 9 products to order
+
+ORDER MANAGEMENT:
+• Ctrl+Z: Remove last item from order
+• Ctrl+A: Clear entire order (with confirmation)
+
+SEARCH:
+• Click search box to search products normally`);
+        }
+        
+        // Add help button (you can add this to your HTML)
+        // <button onclick="showKeyboardHelp()" class="text-xs text-blue-500">Show Keyboard Shortcuts</button>
+        window.showKeyboardHelp = showKeyboardHelp;
+        
+        // Show help on page load (optional)
+        console.log("💡 Keyboard shortcuts enabled! Press Ctrl+H or check console for help.");
+        
+        // Optional: Add Ctrl+H for help
+        document.addEventListener("keydown", function(event) {
+            if (event.ctrlKey && event.key === "h") {
+                event.preventDefault();
+                showKeyboardHelp();
+            }
+        });
     });
 });
