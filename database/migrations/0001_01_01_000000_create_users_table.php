@@ -17,14 +17,16 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role' , ['admin', 'cashier'])->default('cashier');
+            $table->enum('role' , ['admin', 'cashier','staff'])->default('cashier');
             $table->string('contact');
             $table->string('gender');
-            $table->enum('shift', ['day', 'night'])->default('day');
+            $table->string('shift')->nullable();
             $table->time('shift_start')
-                ->default('08:00:00'); // Default start time for day shift
+                ->nullable()
+                ->default('08:00:00');
             $table->time('shift_end')
-                ->default('17:00:00'); // Default end time for day shift
+                ->nullable()
+                ->default('17:00:00');
             $table->rememberToken();
             $table->timestamps();
         });

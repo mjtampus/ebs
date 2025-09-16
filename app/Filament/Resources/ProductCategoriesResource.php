@@ -2,26 +2,32 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\ProductCategoriesResource\Pages;
-use App\Models\ProductCategories;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\Section;
+use Filament\Resources\Resource;
+use App\Models\ProductCategories;
 use Filament\Forms\Components\Grid;
+use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\ProductCategoriesResource\Pages;
 
 class ProductCategoriesResource extends Resource
 {
     protected static ?string $model = ProductCategories::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationGroup = 'Product Management';
+    protected static ?string $navigationGroup = 'Inventory Management';
     protected static ?string $navigationLabel = 'Categories';
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationBadge(): ?string
+    {
+        return ProductCategories::count() > 0 ? (string) ProductCategories::count() : null;
+    }
 
     public static function form(Form $form): Form
     {
@@ -104,5 +110,10 @@ class ProductCategoriesResource extends Resource
             // 'create' => Pages\CreateProductCategories::route('/create'),
             'edit' => Pages\EditProductCategories::route('/{record}/edit'),
         ];
+    }
+
+    public static function canAccess() :bool
+    {
+        return Auth::user()->role === 'admin';
     }
 }
