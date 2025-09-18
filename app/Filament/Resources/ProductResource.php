@@ -12,38 +12,44 @@ use Filament\Resources\Resource;
 use App\Models\ProductCategories;
 use Filament\Resources\Pages\Page;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Tabs\Tab;
 use Filament\Forms\Components\Textarea;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Forms\Components\FileUpload;
 use Filament\Pages\SubNavigationPosition;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Contracts\Support\Htmlable;
+use App\Filament\Resources\ProductBatchResource;
 use App\Filament\Resources\ProductResource\Pages;
-use Filament\Forms\Components\Tabs\Tab;
+use App\Filament\Resources\BatchRelationManagerResource\RelationManagers\ProductIdRelationManager;
 
 class ProductResource extends Resource
 {
+    public static string $parentResource= ProductBatchResource::class;
     protected static ?string $model = Product::class;
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-    protected static ?string $navigationGroup = 'Inventory Management';
-    protected static ?string $navigationLabel = 'Products';
+    protected static ?string $navigationGroup = null;
+    // protected static bool $shouldRegisterNavigation = false;
     protected static ?int $navigationSort = 2;
-    
-    public static function getNavigationBadge(): ?string
-    {
-        return Product::count() > 0 ? (string) Product::count() : null;
-    }
-     
-public static function shouldRegisterNavigation(): bool
-{
-    return in_array(auth()->user()?->role, ['admin', 'staff']);
-}
 
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    public static function getRecordTitle(?Model $record): string|null|Htmlable
+    {
+        return $record->name;
+    }
 
     public static function form(Form $form): Form
     {
@@ -66,7 +72,6 @@ public static function shouldRegisterNavigation(): bool
                                     $set('code', $code);
                                     $set('product_stock.product_code', $code);
                                 }),
-
                             TextInput::make('code')
                                 ->label('Product Code')
                                 ->required()
@@ -139,7 +144,7 @@ public static function shouldRegisterNavigation(): bool
                                         if ($state === 'custom') {
                                             return;
                                         }
-                                        
+
                                         if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
                                             $si = strtolower($matches[1]);
                                             if (in_array($si, ['pcs', 'kg', 'ltr'])) {
@@ -157,7 +162,7 @@ public static function shouldRegisterNavigation(): bool
                                     if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
                                         $custom_unit = $matches[1];
                                         $set('custom_unit', $custom_unit);
-                                    }    
+                                    }
                                 }),
 
                                 TextInput::make('unit')
@@ -264,10 +269,17 @@ public static function shouldRegisterNavigation(): bool
                     ->searchable()
                     ->preload(),
                 Tables\Filters\TrashedFilter::make()
-                    ->visible(fn() => auth()->user()?->role === 'admin'),    
+                    ->visible(fn() => auth()->user()?->role === 'admin'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn() => auth()->user()?->role === 'admin')
+                    ->url(
+                        fn (Pages\ListProducts $livewire, Model $record): string => static::$parentResource::getUrl('products.edit', [
+                            'record' => $record,
+                            'parent' => $livewire->parent,
+                        ])
+                    ),
                 Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
                 Tables\Actions\RestoreAction::make(),
                 Tables\Actions\ViewAction::make()->visible(fn() => auth()->user()?->role !== 'admin'),
@@ -279,12 +291,12 @@ public static function shouldRegisterNavigation(): bool
                 ]),
             ]);
     }
-    
+
 
     public static function getRelations(): array
     {
         return [
-            // Define RelationManagers here (e.g., OrdersRelationManager::class)
+            //
         ];
     }
     public static function getPages(): array
@@ -294,25 +306,27 @@ public static function shouldRegisterNavigation(): bool
             'create' => Pages\CreateProduct::route('/create'),
             auth()->user()?->role !== 'staff' ? Pages\EditProduct::route('/{record}/edit') : null,
             'stock' => Pages\ProductStock::route('/{record}/stock'),
-               'cashier' => Pages\CashierListProducts::route('/cashier'),
+            'cashier' => Pages\CashierListProducts::route('/cashier'),
         ];
     }
 
-    public static function getRecordSubNavigation(Page $page): array
-    {
-        $items = [];
 
-        if (auth()->user()?->role !== 'staff') {
-            $items[] = Pages\EditProduct::class;
-        }
+    // public static function getRecordSubNavigation(Page $page): array
+    // {
+    //     $items = [];
 
-        $items[] = Pages\ProductStock::class;
+    //     if (auth()->user()?->role !== 'staff') {
+    //         $items[] = Pages\EditProduct::class;
+    //     }
 
-        return $page->generateNavigationItems($items);
-    }
+    //     $items[] = Pages\ProductStock::class;
+
+    //     return $page->generateNavigationItems($items);
+    // }
 
     public static function canCreate(): bool
     {
         return auth()->user()?->role === 'admin';
     }
+
 }

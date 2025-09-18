@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\ExpenseList;
 use App\Models\ProductCategories;
+use App\Models\ProductBatch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -18,6 +19,7 @@ class Product extends Model
 
     protected $fillable  = [
         'name',
+        'product_batch_id',
         'code',
         'description',
         'image_path',
@@ -47,6 +49,11 @@ class Product extends Model
 
     public function expense(): HasMany
     {
-        return $this->hasMany(ExpenseList::class);    
+        return $this->hasMany(ExpenseList::class);
+    }
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(ProductBatch::class);
     }
 }
