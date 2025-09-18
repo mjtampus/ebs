@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('expense_name');
             // $table->boolean('is_raw')->default(false);
+            $table->text('description')->nullable();
             $table->foreignId('product_id')->nullable()->constrained()->cascadeOnDelete();
             $table->integer('quantity')->nullable();
             $table->string('type');
             $table->float('unit_price')->nullable();
             $table->float('total_amount');
+            $table->date('expense_date')->default(now());
             $table->softDeletes();
             $table->timestamps();
         });
