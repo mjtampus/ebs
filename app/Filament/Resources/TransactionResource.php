@@ -20,9 +20,10 @@ use Filament\Support\Enums\FontWeight;
 class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
+    protected static ?string $navigationLabel = "Sale Records";
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     // protected static ?string $navigationLabel = 'Transactions';
-    protected static ?string $navigationGroup = 'Financial Tracking';
+    protected static ?string $navigationGroup = 'POS Transactions';
     public static function table(Table $table): Table
     {
         return $table

@@ -2,18 +2,20 @@
 
 namespace App\Filament\Resources\TransactionResource\Pages;
 
-use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DatePicker;
+use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Grid;
 use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Select;
+use Filament\Resources\Components\Tab;
+use Filament\Forms\Components\DatePicker;
+use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
+use App\Filament\Resources\TransactionResource;
+use App\Filament\Resources\TransactionResource\Widgets\TotalSales;
 
 class ListTransactions extends ListRecords
 {
@@ -21,36 +23,58 @@ class ListTransactions extends ListRecords
 
     public $customFilterData = [];
 
-    public function getTabs(): array
-    {
-        return [
-            'all' => Tab::make('All Transactions'),
+public function getTabs(): array
+{
+    $user = Auth::user();
 
-            'today' => Tab::make('Today')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', today()))
-                ->badge(fn () => Transaction::whereDate('created_at', today())->count()),
+    return [
+        'all' => Tab::make('All Transactions')
+            ->badge(fn () => $user->role === 'cashier' 
+                ? Transaction::where('cashier_id', $user->id)->count() 
+                : Transaction::count()),
 
-            'this_week' => Tab::make('This Week')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereBetween('created_at', [
-                    now()->startOfWeek(),
-                    now()->endOfWeek()
-                ]))
-                ->badge(fn () => Transaction::whereBetween('created_at', [
-                    now()->startOfWeek(),
-                    now()->endOfWeek()
-                ])->count()),
+        'today' => Tab::make('Today')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', today()))
+            ->badge(fn () => $user->role === 'cashier' 
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereDate('created_at', today())
+                             ->count() 
+                : Transaction::whereDate('created_at', today())->count()),
 
-            'this_month' => Tab::make('This Month')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year))
-                ->badge(fn () => Transaction::whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)->count()),
+        'this_week' => Tab::make('This Week')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereBetween('created_at', [
+                now()->startOfWeek(),
+                now()->endOfWeek()
+            ]))
+            ->badge(fn () => $user->role === 'cashier' 
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                             ->count() 
+                : Transaction::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                             ->count()),
 
-            'this_year' => Tab::make('This Year')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereYear('created_at', now()->year))
-                ->badge(fn () => Transaction::whereYear('created_at', now()->year)->count()),
-        ];
-    }
+        'this_month' => Tab::make('This Month')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year))
+            ->badge(fn () => $user->role === 'cashier' 
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count()
+                : Transaction::whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count()),
+
+        'this_year' => Tab::make('This Year')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereYear('created_at', now()->year))
+            ->badge(fn () => $user->role === 'cashier' 
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereYear('created_at', now()->year)
+                             ->count()
+                : Transaction::whereYear('created_at', now()->year)
+                             ->count()),
+    ];
+}
 
     protected function getHeaderActions(): array
     {
@@ -209,7 +233,12 @@ class ListTransactions extends ListRecords
     {
         $query = parent::getTableQuery();
 
-        // Apply custom filter if it exists
+        // 1️⃣ Apply role-based filter first
+        if (Auth::user()->role === 'cashier') {
+            $query->where('cashier_id', Auth::id());
+        }
+
+        // 2️⃣ Apply any custom filters if they exist
         if (!empty($this->customFilterData)) {
             $query = $this->applyFilterToQuery($query, $this->customFilterData);
         }
@@ -301,4 +330,13 @@ class ListTransactions extends ListRecords
             'year' => now()->year,
         ]);
     }
+
+        protected function getHeaderWidgets(): array
+    {
+        return [
+            TotalSales::class,
+        ];
+    }
+
+    
 }
