@@ -38,8 +38,13 @@ class ProductStockResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $above = ProductStock::where('stock', '>=', 10)->count();
-        $below = ProductStock::where('stock', '<', 10)->count();
+        $above = ProductStock::whereHas('product.batch', fn($q) => $q->where('expiration_date', '>', now()))
+                    ->where('stock', '>=', 10)
+                    ->count();
+
+        $below = ProductStock::whereHas('product.batch', fn($q) => $q->where('expiration_date', '>', now()))
+                    ->where('stock', '<', 10)
+                    ->count();
 
         return "↑ $above | $below ↓";
     }
@@ -190,6 +195,11 @@ class ProductStockResource extends Resource
                         })                      
                     ->numeric()
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('product.batch.batch_number')
+                    ->label('Batch Number')
+                    ->searchable()
+                    ->sortable(), 
 
                 Tables\Columns\TextColumn::make('restock_status')
                     ->label('Restock Status')
@@ -352,7 +362,7 @@ class ProductStockResource extends Resource
             //
         ];
     }
-
+ 
     public static function getPages(): array
     {
         return [

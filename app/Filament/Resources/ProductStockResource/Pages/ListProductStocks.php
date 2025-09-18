@@ -40,5 +40,12 @@ class ListProductStocks extends ListRecords
             ->modifyQueryUsing(fn (Builder $query) => $query->where('stock', 0))
             ->icon('heroicon-o-x-circle'),
         ];
-    }  
+    }
+    //     protected function getTableQuery(): ?Builder
+    // {
+    //     return parent::getTableQuery()
+    //         ->whereHas('product.batch', function ($query) {
+    //             $query->where('expiration_date', '>=', now());
+    //         });
+    // }  
 }
