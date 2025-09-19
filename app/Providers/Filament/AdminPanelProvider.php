@@ -30,16 +30,18 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->registration()
+            ->spa()
             ->login()
             ->brandName('Elizabeth Bakery')
             ->profile()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->topNavigation(fn () => auth()->user()?->role !== 'admin' ? true : false)
+            ->topNavigation(fn () => $this->auth()->user()?->role !== 'admin' ? true : false)
             ->colors(fn () => $this->auth()->user()?->role === 'admin' ? ['primary' => Color::Amber] : ['primary' => Color::Green])
             ->pages([
                 Pages\Dashboard::class,
-                   CashierListProducts::class, 
+                   CashierListProducts::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([

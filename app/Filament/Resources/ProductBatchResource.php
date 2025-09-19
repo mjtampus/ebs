@@ -63,9 +63,9 @@ class ProductBatchResource extends Resource
         ])
         ->filters([
             Tables\Filters\Filter::make('today')
-                ->label('Expiring Today')
-                ->query(fn (Builder $query) => $query->whereDate('expiration_date', Carbon::today()))
-                ->default(), // ✅ This makes it applied by default
+                ->label('Today')
+                ->query(fn (Builder $query) => $query->whereDate('created_at', Carbon::today()))
+                ->default(),
         ])
         ->actions([
             Action::make('Manage Products')
@@ -92,7 +92,7 @@ class ProductBatchResource extends Resource
             'index' => Pages\ListProductBatches::route('/'),
             'create' => Pages\CreateProductBatch::route('/create'),
             'edit' => Pages\EditProductBatch::route('/{record}/edit'),
-                   // Lessons
+                   // products
             'products.index' => ListProducts::route('/{parent}/products'),
             'products.create' => CreateProduct::route('/{parent}/products/create'),
             'products.edit' => EditProduct::route('/{parent}/products/{record}/edit'),

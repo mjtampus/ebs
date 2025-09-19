@@ -2,18 +2,20 @@
 
 namespace App\Filament\Resources\TransactionResource\Pages;
 
-use App\Filament\Resources\TransactionResource;
 use App\Models\Transaction;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\Components\Tab;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\DatePicker;
+use Illuminate\Support\Carbon;
 use Filament\Forms\Components\Grid;
 use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Components\Select;
+use Filament\Resources\Components\Tab;
+use Filament\Forms\Components\DatePicker;
+use Filament\Resources\Pages\ListRecords;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
+use App\Filament\Resources\TransactionResource;
+use App\Filament\Resources\TransactionResource\Widgets\TotalSales;
 
 class ListTransactions extends ListRecords
 {
@@ -21,36 +23,58 @@ class ListTransactions extends ListRecords
 
     public $customFilterData = [];
 
-    public function getTabs(): array
-    {
-        return [
-            'all' => Tab::make('All Transactions'),
+public function getTabs(): array
+{
+    $user = Auth::user();
 
-            'today' => Tab::make('Today')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', today()))
-                ->badge(fn () => Transaction::whereDate('created_at', today())->count()),
+    return [
+        'all' => Tab::make('All Transactions')
+            ->badge(fn () => $user->role === 'cashier'
+                ? Transaction::where('cashier_id', $user->id)->count()
+                : Transaction::count()),
 
-            'this_week' => Tab::make('This Week')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereBetween('created_at', [
-                    now()->startOfWeek(),
-                    now()->endOfWeek()
-                ]))
-                ->badge(fn () => Transaction::whereBetween('created_at', [
-                    now()->startOfWeek(),
-                    now()->endOfWeek()
-                ])->count()),
+        'today' => Tab::make('Today')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', today()))
+            ->badge(fn () => $user->role === 'cashier'
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereDate('created_at', today())
+                             ->count()
+                : Transaction::whereDate('created_at', today())->count()),
 
-            'this_month' => Tab::make('This Month')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year))
-                ->badge(fn () => Transaction::whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)->count()),
+        'this_week' => Tab::make('This Week')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereBetween('created_at', [
+                now()->startOfWeek(),
+                now()->endOfWeek()
+            ]))
+            ->badge(fn () => $user->role === 'cashier'
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                             ->count()
+                : Transaction::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+                             ->count()),
 
-            'this_year' => Tab::make('This Year')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereYear('created_at', now()->year))
-                ->badge(fn () => Transaction::whereYear('created_at', now()->year)->count()),
-        ];
-    }
+        'this_month' => Tab::make('This Month')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year))
+            ->badge(fn () => $user->role === 'cashier'
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count()
+                : Transaction::whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count()),
+
+        'this_year' => Tab::make('This Year')
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereYear('created_at', now()->year))
+            ->badge(fn () => $user->role === 'cashier'
+                ? Transaction::where('cashier_id', $user->id)
+                             ->whereYear('created_at', now()->year)
+                             ->count()
+                : Transaction::whereYear('created_at', now()->year)
+                             ->count()),
+    ];
+}
 
     protected function getHeaderActions(): array
     {
@@ -99,7 +123,7 @@ class ListTransactions extends ListRecords
                                     $years = [];
                                     $startYear = Transaction::oldest()->first()?->created_at?->year ?? now()->year;
                                     $endYear = now()->year;
-                                    
+
                                     for ($year = $endYear; $year >= $startYear; $year--) {
                                         $years[$year] = $year;
                                     }
@@ -153,11 +177,11 @@ class ListTransactions extends ListRecords
     protected function applyCustomFilter(array $data): void
     {
         $this->customFilterData = $data;
-        
+
         // Set filter label for display
         $filterLabel = $this->getFilterLabel($data);
         session(['transaction_filter_label' => $filterLabel]);
-        
+
         // Refresh the table to apply the filter
         $this->resetTable();
     }
@@ -165,20 +189,20 @@ class ListTransactions extends ListRecords
     protected function getFilterLabel(array $data): string
     {
         $filterType = $data['filter_type'];
-        
+
         switch ($filterType) {
             case 'month_year':
                 return Carbon::createFromDate($data['year'], $data['month'])->format('F Y');
-            
+
             case 'specific_week':
                 return "Week {$data['week']} of " . now()->year;
-            
+
             case 'date_range':
                 return Carbon::parse($data['start_date'])->format('M d, Y') . ' - ' . Carbon::parse($data['end_date'])->format('M d, Y');
-            
+
             case 'year_only':
                 return "Year {$data['year']}";
-            
+
             default:
                 return 'Custom Filter';
         }
@@ -200,7 +224,7 @@ class ListTransactions extends ListRecords
     {
         $baseTitle = 'Transactions';
         $filterLabel = session('transaction_filter_label');
-        
+
         return $filterLabel ? "{$baseTitle} - {$filterLabel}" : $baseTitle;
     }
 
@@ -209,7 +233,12 @@ class ListTransactions extends ListRecords
     {
         $query = parent::getTableQuery();
 
-        // Apply custom filter if it exists
+        // 1️⃣ Apply role-based filter first
+        if (Auth::user()->role === 'cashier') {
+            $query->where('cashier_id', Auth::id());
+        }
+
+        // 2️⃣ Apply any custom filters if they exist
         if (!empty($this->customFilterData)) {
             $query = $this->applyFilterToQuery($query, $this->customFilterData);
         }
@@ -220,27 +249,27 @@ class ListTransactions extends ListRecords
     protected function applyFilterToQuery(Builder $query, array $data): Builder
     {
         $filterType = $data['filter_type'];
-        
+
         switch ($filterType) {
             case 'month_year':
                 return $query->whereMonth('created_at', $data['month'])
                            ->whereYear('created_at', $data['year']);
-            
+
             case 'specific_week':
                 $startOfWeek = now()->setISODate($data['year'] ?? now()->year, $data['week'])->startOfWeek();
                 $endOfWeek = now()->setISODate($data['year'] ?? now()->year, $data['week'])->endOfWeek();
-                
+
                 return $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
-            
+
             case 'date_range':
                 return $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay()
                 ]);
-            
+
             case 'year_only':
                 return $query->whereYear('created_at', $data['year']);
-            
+
             default:
                 return $query;
         }
@@ -258,7 +287,7 @@ class ListTransactions extends ListRecords
     public function mount(): void
     {
         parent::mount();
-        
+
         // Restore custom filter from session if it exists
         if (session()->has('transaction_custom_filter')) {
             $this->customFilterData = session('transaction_custom_filter');
@@ -301,4 +330,13 @@ class ListTransactions extends ListRecords
             'year' => now()->year,
         ]);
     }
+
+        protected function getHeaderWidgets(): array
+    {
+        return [
+            TotalSales::class,
+        ];
+    }
+
+
 }

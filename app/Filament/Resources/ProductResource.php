@@ -166,7 +166,7 @@ class ProductResource extends Resource
                                 }),
 
                                 TextInput::make('unit')
-                                    ->label('Quantity')
+                                    ->label('SI Quantity')
                                     ->numeric()
                                     ->visible(fn($get) => filled($get('SI')))
                                     ->afterStateHydrated(function ($component, $state) {
