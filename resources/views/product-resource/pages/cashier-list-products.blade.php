@@ -110,7 +110,9 @@
                     @if ($product->unit === 'pcs')
                         <div class=" shadow rounded-lg p-4 cursor-pointer product-item" data-id="{{ $product->id }}"
                             data-name="{{ $product->name }}" data-price="{{ $product->unit_price }}"
-                            data-category-id="{{ $product->category_id }}">
+                              data-stock="{{ $product->product_Stock->stock }}"
+                            data-category-id="{{ $product->category_id }}
+                            ">
 
                             <div class="h-[250px]">
                                 <img src="{{ asset('storage/' . $product->image_path) }}"
@@ -118,7 +120,7 @@
                             </div>
 
 
-                            <h2 class="font-bold text-lg">{{ $product->name }} {{ $product->category_id}}</h2>
+                            <h2 class="font-bold text-lg">{{ $product->name }}</h2>
                             <div class="mt-2 text-right font-bold">PHP {{ number_format($product->unit_price, 2) }}</div>
                         </div>
                     @endif

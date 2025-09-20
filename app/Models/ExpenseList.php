@@ -15,14 +15,23 @@ class ExpenseList extends Model
 
     protected $fillable = [ 
         'expense_name',
-        'is_raw',
-        'raw_materials_id',
-        'quantity','type',
+        'description',
+        'product_id',
+        'quantity',
+        'type',
         'unit_price',
-        'total_amount'
+        'total_amount',
+        'expense_date',
     ];
 
-    public function product() :BelongsTo
+    protected $casts = [
+        'expense_date' => 'date',
+        'quantity' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+    ];
+
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
