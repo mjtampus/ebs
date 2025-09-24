@@ -9,80 +9,97 @@ use Filament\Tables\Table;
 use App\Models\ProductBatch;
 use Illuminate\Support\Carbon;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Support\Htmlable;
 use App\Filament\Resources\ProductResource;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProductBatchResource\Pages;
-use App\Filament\Resources\ProductResource\Pages\EditProduct;
-use App\Filament\Resources\ProductResource\Pages\ListProducts;
-use App\Filament\Resources\ProductResource\Pages\CreateProduct;
-use App\Filament\Resources\ProductBatchResource\RelationManagers;
-use App\Filament\Resources\ProductBatchResource\RelationManagers\ProductsRelationManager;
 
 class ProductBatchResource extends Resource
 {
     protected static ?string $model = ProductBatch::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-
     protected static ?string $navigationGroup = 'Inventory Management';
-
-    protected static ?string $navigationLabel = 'Products';
-
+    protected static ?string $navigationLabel = 'Product Batches';
     protected static ?string $relatedResource = ProductResource::class;
-
 
     public static function form(Form $form): Form
     {
-        return $form->schema([
-            Forms\Components\TextInput::make('batch_number'),
-            Forms\Components\TextInput::make('batch_code')->required(),
-            Forms\Components\DatePicker::make('expiration_date'),
-        ]);
+        return $form
+            ->schema([
+                Forms\Components\Card::make() // wrap in a card for better layout
+                    ->schema([
+                        Forms\Components\Grid::make(2) // 2-column layout
+                            ->schema([
+                                TextInput::make('batch_number')
+                                    ->label('Batch Number')
+                                    ->required()
+                                    ->helperText('Enter the unique batch number for this product batch.')
+                                    ->columnSpan(1),
+
+                                TextInput::make('batch_code')
+                                    ->label('Batch Code')
+                                    ->disabled()
+                                    ->default(fn () => 'BATCH-' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT))
+                                    ->helperText('Automatically generated code. Cannot be edited.')
+                                    ->columnSpan(1),
+                            ]),
+
+                        Forms\Components\DatePicker::make('expiration_date')
+                            ->label('Expiration Date')
+                            ->required()
+                            ->helperText('Select the date when this batch will expire.')
+                            ->displayFormat('F j, Y')
+                            ->firstDayOfWeek(1) // Monday as first day
+                            ->columnSpan(2),
+                    ])
+                    ->columns(2) // Card has 2 columns
+                    ->columnSpan(2)
+                    ->columns(2)
+            ]);
     }
 
-    public static function getRecordTitle(?Model $record): string|null|Htmlable
-    {
-        return $record->name;
-    }
 
     public static function table(Table $table): Table
     {
-        return $table->columns([
-            Tables\Columns\TextColumn::make('batch_number'),
-            Tables\Columns\TextColumn::make('batch_code'),
-            // Tables\Columns\TextColumn::make('quantity'),
-            Tables\Columns\TextColumn::make('expiration_date')->date(),
-            Tables\Columns\IconColumn::make('is_expired')
-                ->boolean()
-                ->label('Expired?'),
-        ])
-        ->filters([
-            Tables\Filters\Filter::make('today')
-                ->label('Today')
-                ->query(fn (Builder $query) => $query->whereDate('created_at', Carbon::today()))
-                ->default(),
-        ])
-        ->actions([
-            Action::make('Manage Products')
-            ->color('success')
-            ->icon('heroicon-m-academic-cap')
-            ->url(
-                fn (ProductBatch $record): string => static::getUrl('products.index', [
-                    'parent' => $record->id,
-                ])
-            ),]);
-    }
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('batch_number')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('batch_code')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('expiration_date')
+                    ->date()
+                    ->sortable()
+                    ->label('Expires On')
+                    ->color(fn ($state) => $state < now() ? 'danger' : 'primary'), // red if expired
 
+                Tables\Columns\IconColumn::make('is_expired')
+                    ->boolean()
+                    ->label('Expired?')
+                    ->colors([
+                        'danger' => false,
+                        'success' => true,
+                    ]),
+            ])
+            ->filters([
+                Tables\Filters\Filter::make('today')
+                    ->label('Created Today')
+                    ->query(fn (Builder $query) => $query->whereDate('created_at', Carbon::today()))
+            ])
+            // Clicking the row goes to Manage Products
+            ->recordUrl(fn (ProductBatch $record) => static::getUrl('products.index', ['parent' => $record->id]))
+            ->actions([
+                // Optional: edit action
+                Tables\Actions\EditAction::make()->label('Edit Batch'),
+            ])
+            ->defaultSort('expiration_date', 'asc');
+    }
 
     public static function getRelations(): array
     {
         return [
-
+            // Add relation manager for products if needed
+            // ProductsRelationManager::class,
         ];
     }
 
@@ -92,10 +109,9 @@ class ProductBatchResource extends Resource
             'index' => Pages\ListProductBatches::route('/'),
             'create' => Pages\CreateProductBatch::route('/create'),
             'edit' => Pages\EditProductBatch::route('/{record}/edit'),
-                   // products
-            'products.index' => ListProducts::route('/{parent}/products'),
-            'products.create' => CreateProduct::route('/{parent}/products/create'),
-            'products.edit' => EditProduct::route('/{parent}/products/{record}/edit'),
-               ];
+            'products.index' => ProductResource\Pages\ListProducts::route('/{parent}/products'),
+            'products.create' => ProductResource\Pages\CreateProduct::route('/{parent}/products/create'),
+            'products.edit' => ProductResource\Pages\EditProduct::route('/{parent}/products/{record}/edit'),
+        ];
     }
 }
