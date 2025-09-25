@@ -89,8 +89,8 @@ class ProductBatchResource extends Resource
             // Clicking the row goes to Manage Products
             ->recordUrl(fn (ProductBatch $record) => static::getUrl('products.index', ['parent' => $record->id]))
             ->actions([
-                // Optional: edit action
                 Tables\Actions\EditAction::make()->label('Edit Batch'),
+                Tables\Actions\ViewAction::make()->label('View Batch')
             ])
             ->defaultSort('expiration_date', 'asc');
     }
