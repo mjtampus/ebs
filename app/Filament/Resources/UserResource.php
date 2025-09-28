@@ -62,7 +62,6 @@ class UserResource extends Resource
                             ->options([
                                 'admin' => 'Admin',
                                 'cashier' => 'Cashier',
-                                'staff' => 'Staff',
                             ])
                             ->reactive(),
                     ]),
