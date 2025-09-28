@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class RevenueStatsCards extends BaseWidget
 {
     protected ?string $heading = 'Revenue Overview';
+    protected static bool $isDiscovered = false;
 
     protected function getCards(): array
     {

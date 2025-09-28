@@ -8,6 +8,7 @@ use Filament\Widgets\StatsOverviewWidget\Card;
 
 class SalesAnalyticsOverview extends BaseWidget
 {
+    protected static bool $isDiscovered = false;
     protected function getCards(): array
     {
         $totalTransactions = Transaction::count();

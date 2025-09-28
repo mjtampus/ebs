@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 class MonthlyTransactionsChart extends ChartWidget
 {
     protected static ?string $heading = 'Monthly Transactions This Year';
-    protected static ?string $pollingInterval = null; // e.g. '10s' if you want auto-refresh
+    protected static ?string $pollingInterval = '10s'; // e.g. '10s' if you want auto-refresh
+    protected static bool $isDiscovered = false;
 
     protected function getData(): array
     {

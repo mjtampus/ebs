@@ -11,6 +11,7 @@ class TopSellingProductsChart extends ChartWidget
 {
     protected static ?string $heading = 'Top 5 Selling Products';
     protected static ?string $pollingInterval = null; // Refresh manually or set e.g. '10s'
+    protected static bool $isDiscovered = false;
 
     protected function getData(): array
     {
