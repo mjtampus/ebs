@@ -6,10 +6,22 @@ use Filament\Actions;
 use Illuminate\Support\Facades\Log;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\ProductBatchResource\Traits\HasParentResource;
 
 class CreateProduct extends CreateRecord
 {
+    use HasParentResource;
     protected static string $resource = ProductResource::class;
+
+    protected ?int $pBatchId = null;
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        // pull from querystring
+        $this->pBatchId = request()->query('p_batch_id');
+    }
 
     protected function afterCreate(): void
     {
@@ -47,7 +59,18 @@ class CreateProduct extends CreateRecord
                 $data['unit'] = 'pcs';
             }
         }
-        
+
+        $data[$this->getParentRelationshipKey()] = $this->parent->id;
+
+
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->previousUrl ?? static::getParentResource()::getUrl('products.index', [
+            'parent' => $this->parent,
+        ]);
+    }
+
 }
