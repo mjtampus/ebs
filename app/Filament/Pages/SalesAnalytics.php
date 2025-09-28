@@ -22,4 +22,9 @@ class SalesAnalytics extends Page
             MonthlyTransactionsChart::class
         ];
     }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
 }

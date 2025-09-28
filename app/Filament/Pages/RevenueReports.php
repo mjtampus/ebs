@@ -32,6 +32,11 @@ class RevenueReports extends Page implements Tables\Contracts\HasTable
         $this->endDate   = now()->endOfDay()->toDateString();
     }
 
+        public static function canAccess(): bool
+    {
+        return auth()->user()?->role === 'admin';
+    }
+
     /**
      * Cards at the top
      */
