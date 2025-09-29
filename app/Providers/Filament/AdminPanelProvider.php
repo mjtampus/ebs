@@ -31,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->registration()
-            ->spa()
+            // ->spa()
             ->login()
             ->brandName('Elizabeth Bakery')
             ->profile()
