@@ -21,7 +21,8 @@ class ProductBatchResource extends Resource
     protected static ?string $model = ProductBatch::class;
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationGroup = 'Inventory Management';
-    protected static ?string $navigationLabel = 'Product Batches';
+    protected static ?string $navigationLabel = 'Products';
+    protected static ?string $pluralModelLabel = 'Products';
     protected static ?string $relatedResource = ProductResource::class;
 
     public static function form(Form $form): Form
