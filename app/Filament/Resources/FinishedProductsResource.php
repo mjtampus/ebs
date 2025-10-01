@@ -2,19 +2,20 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\FinishedProductsResource\Pages;
-use App\Filament\Resources\FinishedProductsResource\RelationManagers;
-use App\Models\FinishedProducts;
-use App\Models\Product;
-use App\Models\ProductCategories;
 use Filament\Forms;
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
+use App\Models\Product;
+use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Models\FinishedProducts;
+use Filament\Resources\Resource;
+use App\Models\ProductCategories;
+use Illuminate\Support\Facades\Auth;
+use Filament\Support\Enums\FontWeight;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Support\Enums\FontWeight;
+use App\Filament\Resources\FinishedProductsResource\Pages;
+use App\Filament\Resources\FinishedProductsResource\RelationManagers;
 
 class FinishedProductsResource extends Resource
 {
@@ -291,6 +292,11 @@ class FinishedProductsResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function canAccess() :bool
+    {
+        return Auth::user()->role === 'admin';
     }
 
     public static function getPages(): array
