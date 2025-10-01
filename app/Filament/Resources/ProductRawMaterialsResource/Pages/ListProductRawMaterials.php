@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\ProductRawMaterialsResource\Pages;
 
-use App\Filament\Resources\ProductRawMaterialsResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\ProductRawMaterialsResource;
 
 class ListProductRawMaterials extends ListRecords
 {
@@ -15,5 +16,13 @@ class ListProductRawMaterials extends ListRecords
         return [
             Actions\CreateAction::make(),
         ];
+    }
+
+    protected function getTableQuery(): ?Builder
+    {
+        return parent::getTableQuery()
+            ->whereHas('product_category', function ($query) {
+                $query->where('type', '=', 'Raw Materials');
+            });
     }
 }

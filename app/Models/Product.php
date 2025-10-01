@@ -115,9 +115,9 @@ class Product extends Model
             }
         });
 
-        // Global scope: only include products whose batch is not expired
-        static::addGlobalScope('non_expired_batch', function (Builder $builder) {
-            $builder->whereHas('batch', fn($q) => $q->where('expiration_date', '>', now()));
-        });
+        // // Global scope: only include products whose batch is not expired
+        // static::addGlobalScope('non_expired_batch', function (Builder $builder) {
+        //     $builder->whereHas('batch', fn($q) => $q->where('expiration_date', '>', now()));
+        // });
     }
 }

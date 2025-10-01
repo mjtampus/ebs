@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductBatch extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = ['batch_number', 'batch_code', 'quantity', 'expiration_date'];
 
     protected $casts = [
@@ -34,10 +37,10 @@ class ProductBatch extends Model
         });
 
         // Soft delete all related products if batch expired when updated
-        static::updated(function ($batch) {
-            if ($batch->expiration_date && $batch->expiration_date->isPast()) {
-                $batch->products()->delete();
-            }
-        });
+        // static::updated(function ($batch) {
+        //     if ($batch->expiration_date && $batch->expiration_date->isPast()) {
+        //         $batch->products()->delete();
+        //     }
+        // });
     }
 }

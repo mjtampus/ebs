@@ -10,7 +10,7 @@ class StockMovements extends Model
 {
     use SoftDeletes;
     protected $table = 'stock_movements';
-    
+
     protected $fillable = [
         'movement_type',
         'product_stocks_id',
