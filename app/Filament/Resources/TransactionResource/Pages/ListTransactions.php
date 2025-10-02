@@ -29,16 +29,16 @@ public function getTabs(): array
 
     return [
         'all' => Tab::make('All Transactions')
-            ->badge(fn () => $user->role === 'cashier' 
-                ? Transaction::where('cashier_id', $user->id)->count() 
+            ->badge(fn () => $user->role === 'cashier'
+                ? Transaction::where('cashier_id', $user->id)->count()
                 : Transaction::count()),
 
         'today' => Tab::make('Today')
             ->modifyQueryUsing(fn (Builder $query) => $query->whereDate('created_at', today()))
-            ->badge(fn () => $user->role === 'cashier' 
+            ->badge(fn () => $user->role === 'cashier'
                 ? Transaction::where('cashier_id', $user->id)
                              ->whereDate('created_at', today())
-                             ->count() 
+                             ->count()
                 : Transaction::whereDate('created_at', today())->count()),
 
         'this_week' => Tab::make('This Week')
@@ -46,17 +46,17 @@ public function getTabs(): array
                 now()->startOfWeek(),
                 now()->endOfWeek()
             ]))
-            ->badge(fn () => $user->role === 'cashier' 
+            ->badge(fn () => $user->role === 'cashier'
                 ? Transaction::where('cashier_id', $user->id)
                              ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
-                             ->count() 
+                             ->count()
                 : Transaction::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
                              ->count()),
 
         'this_month' => Tab::make('This Month')
             ->modifyQueryUsing(fn (Builder $query) => $query->whereMonth('created_at', now()->month)
                 ->whereYear('created_at', now()->year))
-            ->badge(fn () => $user->role === 'cashier' 
+            ->badge(fn () => $user->role === 'cashier'
                 ? Transaction::where('cashier_id', $user->id)
                              ->whereMonth('created_at', now()->month)
                              ->whereYear('created_at', now()->year)
@@ -67,7 +67,7 @@ public function getTabs(): array
 
         'this_year' => Tab::make('This Year')
             ->modifyQueryUsing(fn (Builder $query) => $query->whereYear('created_at', now()->year))
-            ->badge(fn () => $user->role === 'cashier' 
+            ->badge(fn () => $user->role === 'cashier'
                 ? Transaction::where('cashier_id', $user->id)
                              ->whereYear('created_at', now()->year)
                              ->count()
@@ -123,7 +123,7 @@ public function getTabs(): array
                                     $years = [];
                                     $startYear = Transaction::oldest()->first()?->created_at?->year ?? now()->year;
                                     $endYear = now()->year;
-                                    
+
                                     for ($year = $endYear; $year >= $startYear; $year--) {
                                         $years[$year] = $year;
                                     }
@@ -177,11 +177,11 @@ public function getTabs(): array
     protected function applyCustomFilter(array $data): void
     {
         $this->customFilterData = $data;
-        
+
         // Set filter label for display
         $filterLabel = $this->getFilterLabel($data);
         session(['transaction_filter_label' => $filterLabel]);
-        
+
         // Refresh the table to apply the filter
         $this->resetTable();
     }
@@ -189,20 +189,20 @@ public function getTabs(): array
     protected function getFilterLabel(array $data): string
     {
         $filterType = $data['filter_type'];
-        
+
         switch ($filterType) {
             case 'month_year':
                 return Carbon::createFromDate($data['year'], $data['month'])->format('F Y');
-            
+
             case 'specific_week':
                 return "Week {$data['week']} of " . now()->year;
-            
+
             case 'date_range':
                 return Carbon::parse($data['start_date'])->format('M d, Y') . ' - ' . Carbon::parse($data['end_date'])->format('M d, Y');
-            
+
             case 'year_only':
                 return "Year {$data['year']}";
-            
+
             default:
                 return 'Custom Filter';
         }
@@ -224,7 +224,7 @@ public function getTabs(): array
     {
         $baseTitle = 'Transactions';
         $filterLabel = session('transaction_filter_label');
-        
+
         return $filterLabel ? "{$baseTitle} - {$filterLabel}" : $baseTitle;
     }
 
@@ -249,27 +249,27 @@ public function getTabs(): array
     protected function applyFilterToQuery(Builder $query, array $data): Builder
     {
         $filterType = $data['filter_type'];
-        
+
         switch ($filterType) {
             case 'month_year':
                 return $query->whereMonth('created_at', $data['month'])
                            ->whereYear('created_at', $data['year']);
-            
+
             case 'specific_week':
                 $startOfWeek = now()->setISODate($data['year'] ?? now()->year, $data['week'])->startOfWeek();
                 $endOfWeek = now()->setISODate($data['year'] ?? now()->year, $data['week'])->endOfWeek();
-                
+
                 return $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
-            
+
             case 'date_range':
                 return $query->whereBetween('created_at', [
                     Carbon::parse($data['start_date'])->startOfDay(),
                     Carbon::parse($data['end_date'])->endOfDay()
                 ]);
-            
+
             case 'year_only':
                 return $query->whereYear('created_at', $data['year']);
-            
+
             default:
                 return $query;
         }
@@ -287,7 +287,7 @@ public function getTabs(): array
     public function mount(): void
     {
         parent::mount();
-        
+
         // Restore custom filter from session if it exists
         if (session()->has('transaction_custom_filter')) {
             $this->customFilterData = session('transaction_custom_filter');
@@ -338,5 +338,5 @@ public function getTabs(): array
         ];
     }
 
-    
+
 }

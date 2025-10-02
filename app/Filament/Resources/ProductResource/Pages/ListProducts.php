@@ -17,11 +17,16 @@ class ListProducts extends ListRecords
     {
         return [
             Actions\CreateAction::make()
-                ->url(
-                    fn (): string => static::getParentResource()::getUrl('products.create', [
-                        'parent' => $this->parent,
-                    ])
-                ),
+                ->url(fn (): string => static::getParentResource()::getUrl('products.create', [
+                    'parent' => $this->parent,
+                ])),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Http\Livewire\CashierOpeningFloat::class, // This will auto-check and pop modal if needed
         ];
     }
 }

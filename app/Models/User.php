@@ -28,14 +28,17 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'remember_token',
     ];
-
+    public function openingFloats()
+    {
+        return $this->hasMany(OpeningFloat::class);
+    }
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'shift_start' => 'string',
-            'shift_end' => 'string',   
+            'shift_end' => 'string',
         ];
     }
 
@@ -77,7 +80,7 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return match ($panel->getId()) {
-            'admin' => $this->isAdmin(),       
+            'admin' => $this->isAdmin(),
             default => false,
         };
     }

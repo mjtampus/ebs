@@ -1,5 +1,17 @@
 <x-filament::page>
-  @script
+    @livewire('cashier-opening-float')
+
+    @script
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('cashierDataLoaded', (data) => {
+                window.cashierData = data;
+                console.log('Cashier data loaded:', data);
+            });
+        });
+    </script>
+    @endscript
+    @script
     <script>
         document.addEventListener('livewire:init', () => {
             Livewire.on('cashierDataLoaded', (data) => {
@@ -93,15 +105,10 @@
                         </span>
                     @endforeach
                 </div>
-<input
-    type="text"
-    placeholder="Search Product..."
-    id="product-search"
-    class="w-full p-2 border rounded
+                <input type="text" placeholder="Search Product..." id="product-search" class="w-full p-2 border rounded
            bg-white text-black
            dark:bg-gray-800 dark:text-white
-           placeholder-gray-400 dark:placeholder-gray-300"
-/>
+           placeholder-gray-400 dark:placeholder-gray-300" />
 
             </div>
 
@@ -110,9 +117,8 @@
                     @if ($product->unit === 'pcs')
                         <div class=" shadow rounded-lg p-4 cursor-pointer product-item" data-id="{{ $product->id }}"
                             data-name="{{ $product->name }}" data-price="{{ $product->unit_price }}"
-                              data-stock="{{ $product->product_Stock->stock }}"
-                            data-category-id="{{ $product->category_id }}
-                            ">
+                            data-stock="{{ $product->product_Stock->stock }}" data-category-id="{{ $product->category_id }}
+                                            ">
 
                             <div class="h-[250px]">
                                 <img src="{{ asset('storage/' . $product->image_path) }}"
