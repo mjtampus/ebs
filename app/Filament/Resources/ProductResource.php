@@ -61,8 +61,14 @@ class ProductResource extends Resource
 
                     Select::make('product_id')
                         ->label('Select Product')
-                        ->options(Product::with('product_category')->get()->pluck('name', 'id'))
-                        ->searchable()
+                        ->options(
+                            Product::with('product_category')
+                                ->whereHas('product_category', function ($query) {
+                                    $query->where('type', 'Bread');
+                                })
+                                ->get()
+                                ->pluck('name', 'id')
+                        )                        ->searchable()
                         ->required()
                         ->reactive() // Disable if editing
                         ->afterStateUpdated(function ($state, callable $set) {

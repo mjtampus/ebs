@@ -23,10 +23,10 @@ class ListProducts extends ListRecords
         ];
     }
 
-    protected function getHeaderWidgets(): array
-    {
-        return [
-            \App\Http\Livewire\CashierOpeningFloat::class, // This will auto-check and pop modal if needed
-        ];
-    }
+    // protected function getHeaderWidgets(): array
+    // {
+    //     return [
+    //         \App\Http\Livewire\CashierOpeningFloat::class, // This will auto-check and pop modal if needed
+    //     ];
+    // }
 }

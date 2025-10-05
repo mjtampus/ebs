@@ -25,7 +25,7 @@ class FinishedProductsResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
 
-    protected static ?string $navigationLabel = 'Finished Products';
+    protected static ?string $navigationLabel = 'Products';
 
     protected static ?string $modelLabel = 'Finished Product';
 
@@ -175,13 +175,13 @@ class FinishedProductsResource extends Resource
                         default => $state,
                     }),
 
-                Tables\Columns\TextColumn::make('productBatch.batch_number')
-                    ->label('Batch')
-                    ->searchable()
-                    ->sortable()
-                    ->toggleable()
-                    ->placeholder('No batch assigned')
-                    ->icon('heroicon-o-cube'),
+                // Tables\Columns\TextColumn::make('productBatch.batch_number')
+                //     ->label('Batch')
+                //     ->searchable()
+                //     ->sortable()
+                //     ->toggleable()
+                //     ->placeholder('No batch assigned')
+                //     ->icon('heroicon-o-cube'),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')

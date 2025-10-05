@@ -67,8 +67,8 @@ class ProductBatchResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('batch_number')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('batch_code')->sortable()->searchable(),
+                Tables\Columns\TextColumn::make('batch_number')->label('name')->sortable()->searchable(),
+                // Tables\Columns\TextColumn::make('batch_code')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('expiration_date')
                     ->date()
                     ->sortable()
