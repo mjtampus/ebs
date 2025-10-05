@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('batch_number')->nullable();
             $table->string('batch_code')->nullable();
             $table->date('expiration_date')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

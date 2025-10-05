@@ -3,7 +3,10 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use Filament\Actions;
+use App\Models\Product;
+use App\Models\ProductStock;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\ProductResource;
 use App\Filament\Resources\ProductBatchResource\Traits\HasParentResource;
@@ -23,47 +26,46 @@ class CreateProduct extends CreateRecord
         $this->pBatchId = request()->query('p_batch_id');
     }
 
-    protected function afterCreate(): void
-    {
-        $stock = $this->record->product_stock->stock ?? 0;
-
-        if ($stock > 0) {
-            $data = [
-                'quantity' => $stock,
-                'movement_type' => 'in',
-                'product_code' => $this->record->code,
-            ];
-
-            Log::info('Creating StockMovement:', $data);
-
-            $this->record->product_stock->stockMovements()->create($data);
-        }
-    }
-
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if (!empty($data['unit'])) {
-            if (isset($data['SI']) && $data['SI'] === 'custom' && !empty($data['custom_unit'])) {
-                $data['unit'] = $data['unit'] . ' ' . $data['custom_unit'];
-            } elseif (isset($data['SI'])) {
-                $data['unit'] = $data['unit'] . ' ' . $data['SI'];
+        $productId     = $data['product_id'];
+        $quantityToAdd = $data['quantity_to_add'];
+
+        $product = Product::with('product_stock')->find($productId);
+
+        if ($product) {
+            // Update product with batch id
+            $product->update([
+                'product_batch_id' => $this->parent->id,
+            ]);
+
+            $stock = $product->product_stock;
+
+            if ($stock) {
+                // Update existing stock
+                $stock->increment('stock', $quantityToAdd);
             } else {
-                $data['unit'] = $data['unit'] . ' pcs';
-            }
-        } else {
-            if (isset($data['SI']) && $data['SI'] === 'custom' && !empty($data['custom_unit'])) {
-                $data['unit'] = $data['custom_unit'];
-            } elseif (isset($data['SI'])) {
-                $data['unit'] = $data['SI'];
-            } else {
-                $data['unit'] = 'pcs';
+                // Create new stock record
+                ProductStock::create([
+                    'product_code'      => $product->code,
+                    'product_id'        => $product->id,
+                    'product_batch_id'  => $this->parent->id,
+                    'stock'             => $quantityToAdd,
+                ]);
             }
         }
 
+        // Ensure Filament knows the relation
         $data[$this->getParentRelationshipKey()] = $this->parent->id;
 
-
         return $data;
+    }
+
+    protected function handleRecordCreation(array $data): Model
+    {
+        // Override to prevent actual creation
+        // Return the product that was updated instead
+        return Product::find($data['product_id']);
     }
 
     protected function getRedirectUrl(): string

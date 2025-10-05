@@ -31,108 +31,148 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Grid::make(2)
+                Forms\Components\Section::make('Personal Information')
+                    ->description('Enter the user\'s basic information')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Full Name')
-                            ->required()
-                            ->maxLength(255),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label('Full Name')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('John Doe')
+                                    ->prefixIcon('heroicon-o-user'),
 
-                        Forms\Components\TextInput::make('email')
-                            ->label('Email Address')
-                            ->email()
-                            ->required()
-                            ->maxLength(255),
-                    ]),
+                                Forms\Components\TextInput::make('email')
+                                    ->label('Email Address')
+                                    ->email()
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('john@example.com')
+                                    ->prefixIcon('heroicon-o-envelope'),
+                            ]),
 
-                Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('contact')
+                                    ->label('Contact Number')
+                                    ->tel()
+                                    ->maxLength(15)
+                                    ->required()
+                                    ->placeholder('+63 912 345 6789')
+                                    ->prefixIcon('heroicon-o-phone'),
+
+                                Forms\Components\Select::make('gender')
+                                    ->label('Gender')
+                                    ->options([
+                                        'male' => 'Male',
+                                        'female' => 'Female',
+                                        'other' => 'Other',
+                                    ])
+                                    ->required()
+                                    ->prefixIcon('heroicon-o-user-circle')
+                                    ->native(false),
+                            ]),
+                    ])
+                    ->collapsible()
+                    ->columnSpan('full'),
+
+                Forms\Components\Section::make('Account Settings')
+                    ->description('Configure user account credentials and role')
                     ->schema([
-                        Forms\Components\TextInput::make('password')
-                            ->label('Password')
-                            ->password()
-                            ->required()
-                            ->maxLength(255)
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->dehydrated(fn ($state) => filled($state))
-                            ->autocomplete('new-password'),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('password')
+                                    ->label('Password')
+                                    ->password()
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                                    ->dehydrated(fn ($state) => filled($state))
+                                    ->autocomplete('new-password')
+                                    ->revealable()
+                                    ->prefixIcon('heroicon-o-lock-closed')
+                                    ->helperText('Must be at least 8 characters long'),
 
-                        Forms\Components\Select::make('role')
-                            ->label('User Role')
-                            ->required()
-                            ->options([
-                                'admin' => 'Admin',
-                                'cashier' => 'Cashier',
-                            ])
-                            ->reactive(),
-                    ]),
+                                Forms\Components\Select::make('role')
+                                    ->label('User Role')
+                                    ->required()
+                                    ->options([
+                                        'admin' => 'Admin',
+                                        'cashier' => 'Cashier',
+                                    ])
+                                    ->reactive()
+                                    ->prefixIcon('heroicon-o-shield-check')
+                                    ->native(false)
+                                    ->helperText('Select the appropriate role for this user'),
+                            ]),
+                    ])
+                    ->collapsible()
+                    ->columnSpan('full'),
 
-                Forms\Components\Grid::make(2)
-                    ->schema([
-                        Forms\Components\TextInput::make('contact')
-                            ->label('Contact Number')
-                            ->tel()
-                            ->maxLength(15)
-                            ->required(),
-
-                        Forms\Components\Select::make('gender')
-                            ->label('Gender')
-                            ->options([
-                                'male' => 'Male',
-                                'female' => 'Female',
-                                'other' => 'Other',
-                            ])
-                            ->required(),
-                    ]),
-
-                Forms\Components\Grid::make(3)
+                Forms\Components\Section::make('Shift Schedule')
+                    ->description('Configure working hours and shift timing')
                     ->schema([
                         Forms\Components\Select::make('shift')
-                            ->label('Shift')
+                            ->label('Shift Type')
                             ->options([
-                                'day' => 'Day',
-                                'night' => 'Night',
-                                'custom' => 'Custom',
+                                'day' => 'Day Shift (9:00 AM - 5:00 PM)',
+                                'night' => 'Night Shift (10:00 PM - 6:00 AM)',
+                                'custom' => 'Custom Schedule',
                             ])
                             ->required()
                             ->visible(fn (callable $get) => $get('role') === 'staff' || $get('role') === 'cashier')
                             ->reactive()
+                            ->native(false)
+                            ->prefixIcon('heroicon-o-clock')
                             ->afterStateUpdated(function ($state, callable $set) {
                                 \Log::info('Shift updated to: ' . $state);
-                                
+
                                 if ($state === 'custom') {
                                     $set('shift_start', null);
                                     $set('shift_end', null);
                                 } elseif ($state === 'day') {
                                     $set('shift_start', '09:00');
                                     $set('shift_end', '17:00');
-                                    \Log::info('Set day shift: start=09:00, end=17:00');
                                 } elseif ($state === 'night') {
                                     $set('shift_start', '22:00');
                                     $set('shift_end', '06:00');
-                                    \Log::info('Set night shift: start=22:00, end=06:00');
                                 }
-                            }),
+                            })
+                            ->columnSpan('full'),
 
-                        Forms\Components\TimePicker::make('shift_start')
-                            ->label('Shift Start')
-                            ->required()
-                            ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff')
-                            ->disabled(fn (callable $get) => $get('shift') !== 'custom')
-                            ->dehydrated()
-                            ->afterStateUpdated(function ($state) {
-                                \Log::info('Shift start field updated to: ' . $state);
-                            }),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TimePicker::make('shift_start')
+                                    ->label('Shift Start Time')
+                                    ->required()
+                                    ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff')
+                                    ->disabled(fn (callable $get) => $get('shift') !== 'custom')
+                                    ->dehydrated()
+                                    ->prefixIcon('heroicon-o-arrow-right-circle')
+                                    ->seconds(false)
+                                    ->afterStateUpdated(function ($state) {
+                                        \Log::info('Shift start field updated to: ' . $state);
+                                    }),
 
-                        Forms\Components\TimePicker::make('shift_end')
-                            ->label('Shift End')
-                            ->required()
-                            ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff')
-                            ->disabled(fn (callable $get) => $get('shift') !== 'custom')
-                            ->dehydrated()
-                            ->afterStateUpdated(function ($state) {
-                                \Log::info('Shift end field updated to: ' . $state);
-                            }),
-                    ]),
+                                Forms\Components\TimePicker::make('shift_end')
+                                    ->label('Shift End Time')
+                                    ->required()
+                                    ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff')
+                                    ->disabled(fn (callable $get) => $get('shift') !== 'custom')
+                                    ->dehydrated()
+                                    ->prefixIcon('heroicon-o-arrow-left-circle')
+                                    ->seconds(false)
+                                    ->afterStateUpdated(function ($state) {
+                                        \Log::info('Shift end field updated to: ' . $state);
+                                    }),
+                            ])
+                            ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff'),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->visible(fn (callable $get) => $get('role') === 'cashier' || $get('role') === 'staff')
+                    ->columnSpan('full'),
             ])
             ->columns(1);
     }

@@ -9,6 +9,7 @@ use Filament\Tables\Table;
 use App\Models\ProductBatch;
 use Illuminate\Support\Carbon;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,9 +20,10 @@ use App\Filament\Resources\ProductBatchResource\Pages;
 class ProductBatchResource extends Resource
 {
     protected static ?string $model = ProductBatch::class;
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static ?string $navigationIcon = 'heroicon-o-plus-circle';
     protected static ?string $navigationGroup = 'Inventory Management';
-    protected static ?string $navigationLabel = 'Product Batches';
+    protected static ?string $navigationLabel = 'Add products';
+    protected static ?string $pluralModelLabel = 'Add products';
     protected static ?string $relatedResource = ProductResource::class;
 
     public static function form(Form $form): Form
@@ -71,7 +73,7 @@ class ProductBatchResource extends Resource
                     ->date()
                     ->sortable()
                     ->label('Expires On')
-                    ->color(fn ($state) => $state < now() ? 'danger' : 'primary'), // red if expired
+                    ->color(fn ($state) => $state < now() ? 'danger' : 'primary'),
 
                 Tables\Columns\IconColumn::make('is_expired')
                     ->boolean()
@@ -86,7 +88,7 @@ class ProductBatchResource extends Resource
                     ->label('Created Today')
                     ->query(fn (Builder $query) => $query->whereDate('created_at', Carbon::today()))
             ])
-            // Clicking the row goes to Manage Products
+
             ->recordUrl(fn (ProductBatch $record) => static::getUrl('products.index', ['parent' => $record->id]))
             ->actions([
                 Tables\Actions\EditAction::make()->label('Edit Batch'),
@@ -98,8 +100,7 @@ class ProductBatchResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // Add relation manager for products if needed
-            // ProductsRelationManager::class,
+
         ];
     }
 
@@ -109,9 +110,15 @@ class ProductBatchResource extends Resource
             'index' => Pages\ListProductBatches::route('/'),
             'create' => Pages\CreateProductBatch::route('/create'),
             'edit' => Pages\EditProductBatch::route('/{record}/edit'),
+
             'products.index' => ProductResource\Pages\ListProducts::route('/{parent}/products'),
             'products.create' => ProductResource\Pages\CreateProduct::route('/{parent}/products/create'),
             'products.edit' => ProductResource\Pages\EditProduct::route('/{parent}/products/{record}/edit'),
         ];
+    }
+
+    public static function canAccess() :bool
+    {
+        return Auth::user()->role === 'cashier';
     }
 }
