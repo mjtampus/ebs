@@ -38,12 +38,11 @@ class ProductStockResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $above = ProductStock::whereHas('product.batch', fn($q) => $q->where('expiration_date', '>', now()))
-                    ->where('stock', '>=', 10)
+        $above = ProductStock::
+                    where('stock', '>=', 10)
                     ->count();
 
-        $below = ProductStock::whereHas('product.batch', fn($q) => $q->where('expiration_date', '>', now()))
-                    ->where('stock', '<', 10)
+        $below = ProductStock::where('stock', '<', 10)
                     ->count();
 
         return "↑ $above | $below ↓";

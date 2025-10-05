@@ -51,123 +51,165 @@ class ProductRawMaterialsResource extends Resource
             });
     }
 
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Section::make('Basic Information')
-                    ->description('Enter the basic details of the raw material')
-                    ->icon('heroicon-o-information-circle')
-                    ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->label('Material Name')
-                                    ->placeholder('e.g., Organic Flour, Steel Sheets')
-                                    ->autocomplete(false)
-                                    ->live(onBlur: true),
+public static function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Section::make('Basic Information')
+                ->description('Enter the basic details of the raw material')
+                ->icon('heroicon-o-information-circle')
+                ->schema([
+                    Forms\Components\Grid::make(2)
+                        ->schema([
+                TextInput::make('name')
+                    ->required()
+                    ->maxLength(255)
+                    ->label('Material Name')
+                    ->placeholder('e.g., Organic Flour, Steel Sheets')
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        if (blank($get('code')) && filled($state)) {
+                            // Generate base code from name (first 20 chars, uppercased, dash-separated)
+                            $base = strtoupper(
+                                preg_replace('/[^A-Za-z0-9]+/', '-', trim(substr($state, 0, 20)))
+                            );
 
-                                TextInput::make('code')
-                                    ->maxLength(50)
-                                    ->label('Material Code')
-                                    ->placeholder('Auto-generated if empty')
-                                    ->helperText('Leave empty to auto-generate based on material name')
-                                    ->alphaDash(),
-                            ]),
+                            // Append 4 random digits
+                            $random = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
 
-                        Textarea::make('description')
-                            ->maxLength(65535)
-                            ->rows(3)
-                            ->label('Description')
-                            ->placeholder('Provide additional details about this raw material...')
-                            ->columnSpanFull()
-                            ->required(),
-                    ])
-                    ->collapsible()
-                    ->columns(2),
+                            $generated = "{$base}-{$random}";
 
-                Section::make('Classification & Pricing')
-                    ->description('Categorize and set pricing for the material')
-                    ->icon('heroicon-o-tag')
-                    ->schema([
-                        Grid::make(3)
-                            ->schema([
-                                Select::make('category_id')
-                                    ->relationship('product_category', 'type', function ($query) {
-                                        $query->where('type', 'Raw Materials')
-                                            ->orWhere('type', 'RawMaterials')
-                                            ->orWhere('type', 'raw materials');
-                                    })
-                                    ->required()
-                                    ->label('Category')
-                                    ->searchable()
-                                    ->preload()
-                                    ->default(function () {
-                                        return \App\Models\ProductCategories::where('type', 'like', '%raw%material%')
-                                            ->orWhere('type', 'RawMaterials')
-                                            ->first()?->id;
-                                    })
-                                    ->native(false),
+                            $set('code', $generated);
+                            $set('product_stock.product_code', $generated);
+                        }
+                    }),
 
-                                TextInput::make('unit')
-                                    ->required()
-                                    ->maxLength(50)
-                                    ->label('Unit of Measurement')
-                                    ->placeholder('kg, lbs, L, pcs')
-                                    ->datalist([
-                                        'kg',
-                                        'lbs',
-                                        'g',
-                                        'L',
-                                        'ml',
-                                        'pcs',
-                                        'm',
-                                        'cm',
-                                        'ft',
-                                    ])
-                                    ->helperText('Select or type custom unit'),
+                TextInput::make('code')
+                    ->maxLength(50)
+                    ->label('Material Code')
+                    ->placeholder('Auto-generated if empty')
+                    ->helperText('Leave empty to auto-generate based on material name')
+                    ->alphaDash()
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        // Keep product_stock.product_code in sync
+                        $set('product_stock.product_code', $state);
+                    }),
+                        ]),
 
-                                TextInput::make('unit_price')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('₱')
-                                    ->label('Unit Price')
-                                    ->placeholder('0.00')
-                                    ->step(0.01)
-                                    ->minValue(0),
-                            ]),
+                    Textarea::make('description')
+                        ->maxLength(65535)
+                        ->rows(3)
+                        ->label('Description')
+                        ->placeholder('Provide additional details about this raw material...')
+                        ->columnSpanFull()
+                        ->required(),
+                ])
+                ->collapsible()
+                ->columns(2),
 
-                    ])
-                    ->collapsible()
-                    ->columns(1),
+            Section::make('Classification & Pricing')
+                ->description('Categorize and set pricing for the material')
+                ->icon('heroicon-o-tag')
+                ->schema([
+                    Forms\Components\Grid::make(3)
+                        ->schema([
+                            Select::make('category_id')
+                                ->relationship('product_category', 'type', function ($query) {
+                                    $query->where('type', 'Raw Materials')
+                                        ->orWhere('type', 'RawMaterials')
+                                        ->orWhere('type', 'raw materials');
+                                })
+                                ->required()
+                                ->label('Category')
+                                ->searchable()
+                                ->preload()
+                                ->default(function () {
+                                    return \App\Models\ProductCategories::where('type', 'like', '%raw%material%')
+                                        ->orWhere('type', 'RawMaterials')
+                                        ->first()?->id;
+                                })
+                                ->native(false),
 
-                Section::make('Material Image')
-                    ->description('Upload an image to help identify this material')
-                    ->icon('heroicon-o-photo')
-                    ->schema([
-                        FileUpload::make('image_path')
-                            ->image()
-                            ->directory('raw-materials')
-                            ->imageEditor()
-                            ->imageEditorAspectRatios([
-                                '1:1',
-                                '4:3',
-                                '16:9',
-                            ])
-                            ->maxSize(5120)
-                            ->label('')
-                            ->columnSpanFull()
-                            ->imagePreviewHeight('250')
-                            ->helperText('Upload an image (Max: 5MB). Recommended: Square format for best display.')
-                            ->uploadingMessage('Uploading image...')
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
-                    ])
-                    ->collapsible()
-                    ->collapsed(),
-            ]);
-    }
+                            TextInput::make('unit')
+                                ->required()
+                                ->maxLength(50)
+                                ->label('Unit of Measurement')
+                                ->placeholder('kg, lbs, L, pcs')
+                                ->datalist([
+                                    'kg',
+                                    'lbs',
+                                    'g',
+                                    'L',
+                                    'ml',
+                                    'pcs',
+                                    'm',
+                                    'cm',
+                                    'ft',
+                                ])
+                                ->helperText('Select or type custom unit'),
+
+                            TextInput::make('unit_price')
+                                ->required()
+                                ->numeric()
+                                ->prefix('₱')
+                                ->label('Unit Price')
+                                ->placeholder('0.00')
+                                ->step(0.01)
+                                ->minValue(0),
+                        ]),
+                ])
+                ->collapsible()
+                ->columns(1),
+
+            Section::make('Material Image')
+                ->description('Upload an image to help identify this material')
+                ->icon('heroicon-o-photo')
+                ->schema([
+                    FileUpload::make('image_path')
+                        ->image()
+                        ->directory('raw-materials')
+                        ->imageEditor()
+                        ->imageEditorAspectRatios([
+                            '1:1',
+                            '4:3',
+                            '16:9',
+                        ])
+                        ->maxSize(5120)
+                        ->label('')
+                        ->columnSpanFull()
+                        ->imagePreviewHeight('250')
+                        ->helperText('Upload an image (Max: 5MB). Recommended: Square format for best display.')
+                        ->uploadingMessage('Uploading image...')
+                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
+                ])
+                ->collapsible()
+                ->collapsed(),
+
+            Section::make('Stock Management')
+                ->description('Manage stock quantity for this raw material')
+                ->icon('heroicon-o-archive-box')
+                ->schema([
+                    Forms\Components\Group::make()
+                        ->relationship('product_stock')
+                        ->schema([
+                            TextInput::make('stock')
+                                ->label('Available Stock')
+                                ->numeric()
+                                ->required()
+                                ->minValue(0)
+                                ->suffix('units')
+                                ->helperText('Enter the current quantity in stock.'),
+
+                            TextInput::make('product_code')
+                                ->label('Product Code')
+                                ->disabled()
+                                ->dehydrated()
+                        ])->columns(2),
+                ])
+                ->collapsible(),
+        ]);
+}
 
     public static function table(Table $table): Table
     {

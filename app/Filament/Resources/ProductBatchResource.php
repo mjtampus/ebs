@@ -69,32 +69,31 @@ class ProductBatchResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('batch_number')->label('name')->sortable()->searchable(),
                 // Tables\Columns\TextColumn::make('batch_code')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('expiration_date')
-                    ->date()
-                    ->sortable()
-                    ->label('Expires On')
-                    ->color(fn ($state) => $state < now() ? 'danger' : 'primary'),
+                // Tables\Columns\TextColumn::make('expiration_date')
+                //     ->date()
+                //     ->sortable()
+                //     ->label('Expires On')
+                //     ->color(fn ($state) => $state < now() ? 'danger' : 'primary'),
 
-                Tables\Columns\IconColumn::make('is_expired')
-                    ->boolean()
-                    ->label('Expired?')
-                    ->colors([
-                        'danger' => false,
-                        'success' => true,
-                    ]),
-            ])
-            ->filters([
-                Tables\Filters\Filter::make('today')
-                    ->label('Created Today')
-                    ->query(fn (Builder $query) => $query->whereDate('created_at', Carbon::today()))
+            //     Tables\Columns\IconColumn::make('is_expired')
+            //         ->boolean()
+            //         ->label('Expired?')
+            //         ->colors([
+            //             'danger' => false,
+            //             'success' => true,
+            //         ]),
+            // ])
+            // ->filters([
+            //     Tables\Filters\Filter::make('today')
+            //         ->label('Created Today')
+            //         ->query(fn (Builder $query) => $query->whereDate('created_at', Carbon::today()))
             ])
 
             ->recordUrl(fn (ProductBatch $record) => static::getUrl('products.index', ['parent' => $record->id]))
             ->actions([
                 Tables\Actions\EditAction::make()->label('Edit Batch'),
                 Tables\Actions\ViewAction::make()->label('View Batch')
-            ])
-            ->defaultSort('expiration_date', 'asc');
+            ]);
     }
 
     public static function getRelations(): array
