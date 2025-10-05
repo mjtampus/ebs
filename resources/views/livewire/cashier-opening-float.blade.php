@@ -8,10 +8,10 @@
                 {{ $this->form }}
 
                 <div class="mt-4 text-right">
-                    <button wire:click="save"
-                        class="bg-green-500 dark:bg-green-600 text-white dark:text-black hover:bg-green-600 dark:hover:bg-green-700 font-bold px-4 py-2 rounded">
+                    <span wire:click="save"
+                        class="bg-green-500 dark:bg-green-600 cursor-pointer text-white dark:text-black hover:bg-green-600 dark:hover:bg-green-700 font-bold px-4 py-2 rounded">
                         Save
-                    </button>
+                    </span>
                 </div>
             </div>
         </div>

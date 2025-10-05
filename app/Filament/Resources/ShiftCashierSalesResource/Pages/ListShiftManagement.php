@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Filament\Resources\CashManagementResource\Pages;
+namespace App\Filament\Resources\ShiftCashierSalesResource\Pages;
 
-use App\Filament\Resources\CashManagementResource;
+use App\Filament\Resources\ShiftCashierSalesResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListCashManagement extends ListRecords
+class ListShiftManagement extends ListRecords
 {
-    protected static string $resource = CashManagementResource::class;
+    protected static string $resource = ShiftCashierSalesResource::class;
+
     public function canCreate(): bool
     {
         return false;

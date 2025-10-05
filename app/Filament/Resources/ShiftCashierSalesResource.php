@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\CashManagementResource\Pages;
+use App\Filament\Resources\ShiftCashierSalesResource\Pages;
 use App\Models\Transaction;
 use App\Models\OpeningFloat;
 use App\Models\CashDrop;
@@ -17,15 +17,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Tables\Actions\Action;
 use Illuminate\Support\Facades\DB;
 use Filament\Facades\Filament;
-class CashManagementResource extends Resource
+class ShiftCashierSalesResource extends Resource
 {
     protected static ?string $model = OpeningFloat::class;
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
-    protected static ?string $navigationLabel = 'Cash Drop Management';
+    protected static ?string $navigationLabel = 'Shift Cashier Sales';
     protected static ?string $navigationGroup = 'POS Transactions';
-
-    protected static ?string $modelLabel = 'Cash Drop';
-    protected static ?string $pluralModelLabel = 'Cash Drops';
+    protected static ?string $modelLabel = 'Shift Record';
+    protected static ?string $pluralModelLabel = 'Shift Records';
 
     public static function canViewAny(): bool
     {
@@ -43,11 +42,26 @@ class CashManagementResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('transaction_count')
-                    ->label('Transaction No.')
-                    ->badge()
-                    ->color('info')
-                    ->alignCenter(),
+                TextColumn::make('shift_start')
+                    ->label('Shift Start')
+                    ->dateTime('M d, Y h:i A')
+                    ->sortable(),
+
+                TextColumn::make('shift_end')
+                    ->label('Shift End (24hrs)')
+                    ->dateTime('M d, Y h:i A')
+                    ->sortable(),
+
+                TextColumn::make('opening_float')
+                    ->label('Opening Float')
+                    ->money('PHP')
+                    ->sortable(),
+
+                // TextColumn::make('transaction_count')
+                //     ->label('# Trans')
+                //     ->badge()
+                //     ->color('info')
+                //     ->alignCenter(),
 
                 TextColumn::make('total_sales')
                     ->label('Total Sales')
@@ -58,15 +72,7 @@ class CashManagementResource extends Resource
                             ->money('PHP'),
                     ]),
 
-                // TextColumn::make('cash_received')
-                //     ->label('Cash Received')
-                //     ->money('PHP')
-                //     ->sortable(),
 
-                // TextColumn::make('change_given')
-                //     ->label('Change Given')
-                //     ->money('PHP')
-                //     ->sortable(),
 
                 TextColumn::make('expected_cash')
                     ->label('Total Cash Amount')
@@ -117,42 +123,7 @@ class CashManagementResource extends Resource
                             );
                     }),
             ])
-            ->actions([
-                Action::make('set_cash_drop')
-                    ->label('Cash Drop')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('warning')
-                    ->form([
-                        TextInput::make('amount')
-                            ->label('Cash Drop Amount')
-                            ->numeric()
-                            ->required()
-                            ->minValue(0)
-                            ->prefix('₱')
-                            ->helperText(fn($record) => 'Available: ₱' . number_format($record->remaining_cash, 2)),
 
-                        TextInput::make('notes')
-                            ->label('Notes')
-                            ->maxLength(255),
-                    ])
-                    ->action(function ($record, array $data) {
-                        CashDrop::create([
-                            'cashier_id' => $record->user_id,
-                            'opening_float_id' => $record->id,
-                            'amount' => $data['amount'],
-                            'date' => now()->toDateString(),
-                            'notes' => $data['notes'] ?? null,
-                            'recorded_by' => auth()->id(),
-                        ]);
-
-                        \Filament\Notifications\Notification::make()
-                            ->title('Cash Drop Recorded')
-                            ->success()
-                            ->body("₱" . number_format($data['amount'], 2) . " recorded")
-                            ->send();
-                    })
-                    ->modalHeading(fn($record) => 'Cash Drop - ' . $record->cashier_name),
-            ])
             ->defaultSort('shift_start', 'desc')
             ->poll('30s');
     }
@@ -263,7 +234,7 @@ class CashManagementResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCashManagement::route('/'),
+            'index' => Pages\ListShiftManagement::route('/'),
         ];
     }
 }
