@@ -159,6 +159,7 @@ class ProductStockResource extends Resource
                             : $data['stock'];
 
                         $stockRecord->product_code = $data['product_code'];
+                        $stockRecord->product_batch_id = $data['product_batch_id'];
                         $stockRecord->stock = ($stockRecord->exists ? $stockRecord->stock : 0) + $change;
                         $stockRecord->save();
 

@@ -23,6 +23,14 @@ class ProductSeeder extends Seeder
         'unit' => 'pcs',
         ]);
 
-
+        Product::create([
+        'name' => 'Ensaymada Bread',
+        'code' => 'Ensaymada-001',
+        'description' => 'A soft, fluffy bread topped with butter, sugar, and grated cheese.',
+        'image_path' => '01K77AQR94SH9XF9YZ8NPZMS20.jpg',
+        'category_id' => 2, // Assuming 2 is the ID for 'Bread' category
+        'unit_price' => 10,
+        'unit' => 'pcs',
+        ]);
     }
 }    

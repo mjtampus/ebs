@@ -72,10 +72,20 @@ class ProductStocksRelationManager extends RelationManager
                     ->form([
                         Forms\Components\Select::make('product_batch_id')
                             ->label('Batch')
-                            ->relationship('batch', 'batch_number')
-                            ->required()
+                            ->options(fn (RelationManager $livewire) =>
+                                \App\Models\ProductBatch::with('products')
+                                    ->where('product_id', $livewire->ownerRecord->id)
+                                    ->get()
+                                    ->mapWithKeys(function ($batch) {
+                                        return [
+                                            $batch->id => "{$batch->products->name} - {$batch->batch_number} - {$batch->batch_code}",
+                                        ];
+                                    })
+                            )  
                             ->searchable()
-                            ->preload(),
+                            ->required()
+                            ->reactive()
+                            ->helperText('Only shows batches for the selected product.'),
 
                         Forms\Components\Select::make('movement_type')
                             ->label('Movement Type')

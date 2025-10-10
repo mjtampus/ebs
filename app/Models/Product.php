@@ -90,11 +90,6 @@ class Product extends Model
         return $this->belongsTo(ProductCategories::class , 'category_id');
     }
 
-    public function stocks(): HasMany
-    {
-        return $this->hasMany(ProductStock::class, 'product_id');
-    }
-
     public function product_stock(): HasOne
     {
         return $this->hasOne(ProductStock::class, 'product_id');

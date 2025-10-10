@@ -40,8 +40,9 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
             'contact' => '09434244877',
             'gender' => 'male',
+            'shift' => 'day',
             'shift_start' => '08:00',
-            'shift_end' => '16:00',
+            'shift_end' => '17:00',
         ]);
     }
 }

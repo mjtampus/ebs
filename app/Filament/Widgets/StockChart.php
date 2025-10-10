@@ -2,30 +2,34 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\ProductStock;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
-use App\Models\ProductStock;
 use Override;
 
 class StockChart extends ChartWidget
 {
-    public ?string $filter = 'today';
     protected static ?int $sort = 2;
     protected int | string | array $columnSpan = 1;
+
+    public ?string $filter = 'all_time';
+
     #[Override]
     public function getHeading(): ?string
     {
         return auth()->user()->role === 'admin'
-            ? 'Raw material stock levels'
-            : 'Product stock levels';
+            ? 'Raw Material Stock Levels'
+            : 'Product Stock Levels';
     }
+
     #[Override]
     public function getDescription(): ?string
     {
         return auth()->user()->role === 'admin'
-            ? 'All stock raw material levels'
-            : 'All Product stock levels';
+            ? 'Overview of all raw material stock levels.'
+            : 'Overview of finished product stock levels.';
     }
+
     #[Override]
     protected function getFilters(): ?array
     {
@@ -35,62 +39,88 @@ class StockChart extends ChartWidget
             'all_time' => 'All Time',
         ];
     }
+
     #[Override]
     protected function getData(): array
     {
-        $filter = $this->filter;
         $isAdmin = auth()->user()->role === 'admin';
+        $query = ProductStock::query()
+            ->with(['product', 'batch'])
+            ->whereHas('product.product_category', function ($q) use ($isAdmin) {
+                $isAdmin
+                    ? $q->where('has_unit', 1) // raw materials
+                    : $q->where(fn($qq) => $qq->where('has_unit', 0)->orWhereNull('has_unit')); // finished goods
+            });
 
-        $stocksQuery = ProductStock::query()
-            ->whereHas('product.product_category', function ($query) use ($isAdmin) {
-                $query->where('has_unit', $isAdmin ? 1 : 0);
-            })
-            ->with('product');
+        // 🕒 Apply filter
+        match ($this->filter) {
+            'today' => $query->whereDate('created_at', Carbon::today()),
+            'this_month' => $query
+                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereYear('created_at', Carbon::now()->year),
+            default => null,
+        };
 
-        if ($filter === 'today') {
-            $stocksQuery->whereDate('created_at', now());
-        } elseif ($filter === 'this_month') {
-            $stocksQuery->whereMonth('created_at', now()->month)
-                        ->whereYear('created_at', now()->year);
+        $stocks = $query->get();
+
+        // 🔢 Group stock levels
+        $groups = [
+            'In Stock' => $stocks->filter(fn($s) => $s->stock > 10),
+            'Low Stock' => $stocks->filter(fn($s) => $s->stock > 0 && $s->stock <= 10),
+            'Out of Stock' => $stocks->filter(fn($s) => $s->stock <= 0),
+        ];
+
+        // 🎨 Dynamic colors
+        $colors = [
+            'In Stock' => '#4CAF50',   // Green
+            'Low Stock' => '#FFC107',  // Yellow
+            'Out of Stock' => '#F44336', // Red
+        ];
+
+        // 🧠 Format labels with limited preview of product names
+        $formatNames = function ($collection) {
+            $names = $collection->map(function ($s) {
+                $product = $s->product->name ?? 'Unnamed';
+                $batch = $s->batch->batch_code ?? 'No Batch';
+                return "{$product} ({$batch})";
+            });
+
+            return $names->take(3)->join(', ') . ($names->count() > 3 ? '...' : '');
+        };
+
+        // 📊 Chart dataset
+        $labels = [];
+        $data = [];
+        $bgColors = [];
+
+        foreach ($groups as $label => $items) {
+            $labels[] = "{$label}: " . $formatNames($items);
+            $data[] = $items->count();
+            $bgColors[] = $colors[$label];
         }
 
-        $stocks = $stocksQuery->get();
-
-        $inStockProducts = $stocks->filter(fn($s) => $s->stock > 10);
-        $lowStockProducts = $stocks->filter(fn($s) => $s->stock > 0 && $s->stock <= 10);
-        $outOfStockProducts = $stocks->filter(fn($s) => $s->stock <= 0);
-
-        $inStockCount = $inStockProducts->count();
-        $lowStockCount = $lowStockProducts->count();
-        $outOfStockCount = $outOfStockProducts->count();
-
-        $formatNames = fn($products) => $products
-            ->map(fn($p) => $p->product->name ?? 'Unnamed')
-            ->join(', ') ?: 'None';
-
         return [
-            'datasets' => [
-                [
-                    'label' => 'Stock Levels',
-                    'data' => [$inStockCount, $lowStockCount, $outOfStockCount],
-                    'backgroundColor' => ['#4CAF50', '#FFC107', '#F44336'],
-                ],
-            ],
-            'labels' => [
-                'In Stock: ' . $formatNames($inStockProducts),
-                'Low Stock: ' . $formatNames($lowStockProducts),
-                'Out of Stock: ' . $formatNames($outOfStockProducts),
-            ],
+            'datasets' => [[
+                'label' => 'Stock Levels',
+                'data' => $data,
+                'backgroundColor' => $bgColors,
+                'borderColor' => '#fff',
+                'borderWidth' => 2,
+                'hoverOffset' => 12,
+            ]],
+            'labels' => $labels,
         ];
     }
+
+    #[Override]
     protected function getType(): string
     {
         return 'doughnut';
     }
 
+    #[Override]
     public function getColumnSpan(): int|string|array
     {
-    // If admin, force 'full', else use original value if not null
-    return auth()->user()->role === 'admin' ? 'full' : ($this->columnSpan ?? 1);
+        return auth()->user()->role === 'admin' ? 'full' : ($this->columnSpan ?? 1);
     }
 }
