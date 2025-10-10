@@ -12,6 +12,7 @@ class ProductStock extends Model
 
     protected $fillable = [
         'product_id',
+        'product_batch_id',
         'product_code',
         'stock',
     ];
@@ -24,6 +25,11 @@ class ProductStock extends Model
     public function stockMovements(): HasMany
     {
         return $this->hasMany(StockMovements::class, 'product_stocks_id');
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(\App\Models\ProductBatch::class, 'product_batch_id');
     }
 
     protected static function booted()

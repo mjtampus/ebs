@@ -90,6 +90,11 @@ class Product extends Model
         return $this->belongsTo(ProductCategories::class , 'category_id');
     }
 
+    public function stocks(): HasMany
+    {
+        return $this->hasMany(ProductStock::class, 'product_id');
+    }
+
     public function product_stock(): HasOne
     {
         return $this->hasOne(ProductStock::class, 'product_id');
@@ -100,9 +105,9 @@ class Product extends Model
         return $this->hasMany(ExpenseList::class);
     }
 
-    public function batch(): BelongsTo
+    public function batch(): HasMany
     {
-        return $this->belongsTo(ProductBatch::class, 'product_batch_id');
+        return $this->hasMany(ProductBatch::class, 'product_id');
     }
 
     protected static function booted()

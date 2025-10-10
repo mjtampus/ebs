@@ -5,20 +5,27 @@ namespace App\Models;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductBatch extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['batch_number', 'batch_code', 'quantity', 'expiration_date'];
+    protected $fillable = ['product_id', 'batch_number', 'batch_code', 'quantity', 'expiration_date'];
 
     protected $casts = [
         'expiration_date' => 'date',
     ];
 
-    public function products()
+    public function products(): BelongsTo
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function stocks(): HasOne
+    {
+        return $this->hasOne(ProductStock::class, 'product_batch_id');
     }
 
     public function getIsExpiredAttribute()

@@ -14,18 +14,21 @@ class ProductBatchSeeder extends Seeder
     public function run(): void
     {
         ProductBatch::create([
-            'batch_number' => 'Morning',
+            'product_id' => 1,
+            'batch_number' => 'Morning October 10, 2025',
             'batch_code' => 'morning-001',
         ]);
 
         ProductBatch::create([
-            'Batch_number' => 'Afternoon',
-            'batch_code' => 'Afternoon-002',
+            'product_id' => 1,
+            'Batch_number' => 'Afternoon October 10, 2025',
+            'batch_code' => 'Afternoon-001',
         ]);
 
         ProductBatch::create([
-            'Batch_number' => 'Night',
-            'batch_code' => 'Night-002',
+            'product_id' => 1,
+            'Batch_number' => 'Night October 10, 2025',
+            'batch_code' => 'Night-001',
         ]);
     }
 }
