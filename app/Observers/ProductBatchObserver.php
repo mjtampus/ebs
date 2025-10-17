@@ -11,8 +11,8 @@ class ProductBatchObserver
         // Only handle soft deletes
         if (! $batch->isForceDeleting()) {
             // Delete related product (if needed)
-            if ($batch->products) {
-                $batch->products->delete();
+            if ($batch->stocks) {
+                $batch->stocks->delete();
             }
 
             // Delete related stock
