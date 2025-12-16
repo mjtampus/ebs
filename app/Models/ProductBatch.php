@@ -43,6 +43,16 @@ class ProductBatch extends Model
             }
         });
 
+        static::creating(function ($batch) {
+            if (empty($batch->batch_number)) {
+                // Get the product's name from the related Product model
+                $productName = $batch->products ? $batch->products->name : 'default';  // Handle case if product is not set
+
+                // Generate the batch code with product's name as prefix
+                $batch->batch_number = $productName . '-' . str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            }
+        });
+
         // Soft delete all related products if batch expired when updated
         // static::updated(function ($batch) {
         //     if ($batch->expiration_date && $batch->expiration_date->isPast()) {

@@ -81,7 +81,7 @@ class ProductStocksRelationManager extends RelationManager
                                             $batch->id => "{$batch->products->name} - {$batch->batch_number} - {$batch->batch_code}",
                                         ];
                                     })
-                            )  
+                            )
                             ->searchable()
                             ->required()
                             ->reactive()
@@ -100,6 +100,9 @@ class ProductStocksRelationManager extends RelationManager
                             ->numeric()
                             ->label('Quantity')
                             ->required(),
+                        Forms\Components\Textarea::make('reason')
+                            ->rows(13)
+
                     ])
                     ->action(function (array $data, RelationManager $livewire) {
                         $product = $livewire->ownerRecord;
@@ -119,14 +122,15 @@ class ProductStocksRelationManager extends RelationManager
                         $stockRecord->stock = ($stockRecord->exists ? $stockRecord->stock : 0) + $change;
                         $stockRecord->save();
 
-                    //     StockMovements::create([
-                    //         'product_id' => $product->id,
-                    //         'product_code' => $product->code,
-                    //         'product_stocks_id' => $stockRecord->id,
-                    //         'product_batch_id' => $data['product_batch_id'],
-                    //         'movement_type' => $data['movement_type'],
-                    //         'quantity' => $data['stock'],
-                    //     ]);
+                        StockMovements::create([
+                            'product_id' => $product->id,
+                            'product_code' => $product->code,
+                            'product_stocks_id' => $stockRecord->id,
+                            'product_batch_id' => $data['product_batch_id'],
+                            'movement_type' => $data['movement_type'],
+                            'reason' => $data['reason'],
+                            'quantity' => $data['stock'],
+                        ]);
                     })
                     ->successNotificationTitle('Stock updated successfully'),
             ]);

@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Resources\TransactionResource;
+use App\Models\StockMovements;
 use Spatie\RouteAttributes\Attributes\Post;
 
 
@@ -64,6 +65,7 @@ class TransactionController extends Controller
                 foreach ($validated['items'] as $item) {
                     $stock = ProductStock::where('product_id', $item['product_id'])->first();
                     $stock->decrement('stock', $item['quantity']);
+                    $stock->sold($item['quantity']);
 
                     Log::info('Stock updated', [
                         'product_id' => $item['product_id'],

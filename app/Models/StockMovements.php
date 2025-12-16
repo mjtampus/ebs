@@ -16,10 +16,15 @@ class StockMovements extends Model
         'product_stocks_id',
         'product_code',
         'quantity',
+        'reason'
     ];
 
-    public function productStock() :BelongsTo
+
+    public function productStock()
     {
-        return $this->belongsTo(ProductStock::class);
+        return $this->belongsTo(
+            ProductStock::class,
+            'product_stocks_id'
+        );
     }
 }

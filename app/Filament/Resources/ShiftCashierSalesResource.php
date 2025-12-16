@@ -141,91 +141,91 @@ class ShiftCashierSalesResource extends Resource
             ->selectRaw('(SELECT name FROM users WHERE users.id = opening_floats.user_id) as cashier_name')
             ->selectRaw('
             COALESCE((
-                SELECT COUNT(*) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT COUNT(*)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
             ), 0) as transaction_count
         ')
             ->selectRaw('
             COALESCE((
-                SELECT SUM(total_amount) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(total_amount)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
             ), 0) as total_sales
         ')
             ->selectRaw('
             COALESCE((
-                SELECT SUM(amount_received) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(amount_received)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
             ), 0) as cash_received
         ')
             ->selectRaw('
             COALESCE((
-                SELECT SUM(`change`) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(`change`)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
             ), 0) as change_given
         ')
             ->selectRaw('
             COALESCE((
-                SELECT SUM(amount) 
-                FROM cash_drops 
+                SELECT SUM(amount)
+                FROM cash_drops
                 WHERE cash_drops.opening_float_id = opening_floats.id
             ), 0) as cash_drop
         ')
             ->selectRaw('
-            opening_floats.amount + 
+            opening_floats.amount +
             COALESCE((
-                SELECT SUM(amount_received) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(amount_received)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
-            ), 0) - 
+            ), 0) -
             COALESCE((
-                SELECT SUM(`change`) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(`change`)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
             ), 0) as expected_cash
         ')
             ->selectRaw('
-            opening_floats.amount + 
+            opening_floats.amount +
             COALESCE((
-                SELECT SUM(amount_received) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(amount_received)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
-            ), 0) - 
+            ), 0) -
             COALESCE((
-                SELECT SUM(`change`) 
-                FROM transactions 
-                WHERE transactions.cashier_id = opening_floats.user_id 
-                AND transactions.created_at >= opening_floats.created_at 
+                SELECT SUM(`change`)
+                FROM transactions
+                WHERE transactions.cashier_id = opening_floats.user_id
+                AND transactions.created_at >= opening_floats.created_at
                 AND transactions.created_at < DATE_ADD(opening_floats.created_at, INTERVAL 24 HOUR)
                 AND transactions.deleted_at IS NULL
-            ), 0) - 
+            ), 0) -
             COALESCE((
-                SELECT SUM(amount) 
-                FROM cash_drops 
+                SELECT SUM(amount)
+                FROM cash_drops
                 WHERE cash_drops.opening_float_id = opening_floats.id
             ), 0) as remaining_cash
         ');

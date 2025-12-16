@@ -109,12 +109,18 @@ class ProductStockResource extends Resource
                                 ->default('in')
                                 ->required(),
 
-                            Forms\Components\TextInput::make('stock')
+                                Forms\Components\TextInput::make('stock')
                                 ->label('Stock Quantity')
-                                ->required()
                                 ->numeric()
-                                ->default(0),
+                                ->required()
+                                ->default(0)
+                                ->helperText('Use this field to manually update the available stock level.')
+
+
                         ])->columns(2),
+
+                        Forms\Components\Textarea::make('reason')
+                        ->rows(13),
 
                         Forms\Components\Select::make('product_batch_id')
                             ->label('Batch')
@@ -133,7 +139,7 @@ class ProductStockResource extends Resource
                         ->label('Product Image')
                         ->content(function ($get) {
                             $image = $get('product_image');
-                    
+
                             return $image
                                 ? new \Illuminate\Support\HtmlString(
                                     '<div class="flex justify-center py-4">
@@ -163,14 +169,15 @@ class ProductStockResource extends Resource
                         $stockRecord->stock = ($stockRecord->exists ? $stockRecord->stock : 0) + $change;
                         $stockRecord->save();
 
-                        // StockMovements::create([
-                        //     'product_id' => $data['product_id'],
-                        //     'product_stocks_id' => $stockRecord->id,
-                        //     'product_code' => $data['product_code'],
-                        //     'movement_type' => $data['movement_type'],
-                        //     'quantity' => $data['stock'],
-                        // ]);
-                        // $action->success();
+                        StockMovements::create([
+                            'product_id' => $data['product_id'],
+                            'product_stocks_id' => $stockRecord->id,
+                            'product_code' => $data['product_code'],
+                            'movement_type' => $data['movement_type'],
+                            'quantity' => $data['stock'],
+                            'reason' => $data['reason']
+                        ]);
+                        $action->success();
                     })
                     ->successNotificationTitle('Stock Updated Successfully')
                     ->failureNotificationTitle('Failed to Update Stock')
@@ -205,7 +212,7 @@ class ProductStockResource extends Resource
                             } else {
                                 return 'success';
                             }
-                        })                      
+                        })
                     ->numeric()
                     ->sortable(),
 
@@ -271,7 +278,7 @@ class ProductStockResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make()
                     ->slideOver()
-                    ->label('Add Stock')
+                    ->label('Edit Stock')
                     ->modalHeading('Edit Product Stock')
                     ->successNotificationTitle('stock updated successfully')
                     ->failureNotificationTitle('Failed to update stock')
@@ -311,6 +318,9 @@ class ProductStockResource extends Resource
                                     ->required(),
                             ])->columns(2),
 
+                            Forms\Components\Textarea::make('reason')
+                            ->rows(13),
+
                             Forms\Components\Placeholder::make('product_image_preview')
                                 ->label('Product Image')
                                 ->content(function ($get, $state, $record) {
@@ -333,30 +343,31 @@ class ProductStockResource extends Resource
                     })
                     ->action(function (array $data, \App\Models\ProductStock $record, Action $action) {
                         $originalStock = $record->stock;
-                    
+
                         if ($data['movement_type'] === 'out') {
                             if ($data['stock'] > $originalStock) {
                                 $action->failureNotificationMessage('The quantity you entered is greater than the current stock.');
                                 $action->failure();
                                 return;
                             }
-                    
+
                             $record->stock -= $data['stock'];
                         } elseif ($data['movement_type'] === 'in') {
                             $record->stock += $data['stock'];
                         }
-                    
+
                         $record->product_code = $data['product_code'];
                         $record->save();
-                    
+
                         \App\Models\StockMovements::create([
                             'product_id' => $record->product_id,
                             'product_stocks_id' => $record->id,
                             'product_code' => $record->product_code,
                             'movement_type' => $data['movement_type'],
+                            'reason' => $data['reason'],
                             'quantity' => $data['stock'],
                         ]);
-                    
+
                         $action->success();
                     })
             ])
@@ -375,7 +386,7 @@ class ProductStockResource extends Resource
             //
         ];
     }
- 
+
     public static function getPages(): array
     {
         return [

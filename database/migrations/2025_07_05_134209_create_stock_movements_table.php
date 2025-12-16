@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('movement_type');
             $table->foreignId('product_stocks_id')->constrained()->cascadeOnDelete();
             $table->string('product_code');
+            $table->string('reason')->nullable();
             $table->integer('quantity');
             $table->softDeletes();
             $table->timestamps();
