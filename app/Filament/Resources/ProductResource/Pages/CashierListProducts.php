@@ -19,7 +19,7 @@
 //     }
 //     public static function getNavigationLabel(): string
 //     {
-//         return 'Start New Sales'; 
+//         return 'Start New Sales';
 //     }
 
 //     public function isCashier(): bool
@@ -50,12 +50,12 @@ class CashierListProducts extends ListRecords
     public function mount(): void
     {
         parent::mount();
-        
+
         $user = auth()->user();
         $this->cashierId = $user->id;
         $this->cashierName = $user->name;
         $this->cashierRole = $user->role;
-        
+
         // Dispatch data to frontend
         $this->dispatch('cashierDataLoaded', [
             'id' => $this->cashierId,
@@ -66,6 +66,10 @@ class CashierListProducts extends ListRecords
 
     public function getProducts()
     {
+        // dd(Product::where('unit', 'pcs')
+        // ->latest()
+        // ->get());
+
         return Product::where('unit', 'pcs')
             ->latest()
             ->get();

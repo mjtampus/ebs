@@ -216,10 +216,22 @@ class ProductStockResource extends Resource
                     ->numeric()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('batch.batch_number')
-                    ->label('Batch Name')
-                    ->sortable()
-                    ->searchable(),
+                    Tables\Columns\TextColumn::make('batch_names')
+                    ->label('Batches')
+                    ->searchable()
+                    ->wrap()
+                    ->badge()
+                    ->separator(',')
+                    ->color('success'), // Green color
+
+                // OR if you want to show stock quantities per batch:
+                Tables\Columns\TextColumn::make('batch_details')
+                    ->label('Batches (Stock)')
+                    ->searchable()
+                    ->wrap()
+                    ->badge()
+                    ->separator(',')
+                    ->color('success'),
 
                 Tables\Columns\TextColumn::make('restock_status')
                     ->label('Restock Status')

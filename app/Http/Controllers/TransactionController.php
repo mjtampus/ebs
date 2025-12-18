@@ -64,7 +64,7 @@ class TransactionController extends Controller
                 // 📉 Deduct stock
                 foreach ($validated['items'] as $item) {
                     $stock = ProductStock::where('product_id', $item['product_id'])->first();
-                    $stock->decrement('stock', $item['quantity']);
+                    // $stock->decrement('stock', $item['quantity']);
                     $stock->sold($item['quantity']);
 
                     Log::info('Stock updated', [

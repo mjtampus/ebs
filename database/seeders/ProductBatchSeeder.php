@@ -21,13 +21,13 @@ class ProductBatchSeeder extends Seeder
 
         ProductBatch::create([
             'product_id' => 2,
-            'Batch_number' => 'Morning October 10, 2025',
+            'batch_number' => 'Morning October 10, 2025',
             'batch_code' => 'morning-002',
         ]);
 
         ProductBatch::create([
             'product_id' => 1,
-            'Batch_number' => 'Morning October 10, 2025',
+            'batch_number' => 'Morning October 10, 2025',
             'batch_code' => 'Morning-003',
         ]);
     }

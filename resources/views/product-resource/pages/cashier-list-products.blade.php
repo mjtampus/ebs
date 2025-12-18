@@ -12,7 +12,7 @@
         });
     </script>
     @endscript
-    
+
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border ">
         <div class="grid grid-cols-1 gap-4">
@@ -108,20 +108,20 @@
                 @php
                     $products = method_exists($this, 'getProducts') ? $this->getProducts() : collect([]);
                 @endphp
-                
+
                 @forelse ($products as $product)
                     @if ($product->unit === 'pcs' && $product->product_Stock)
-                        <div class=" shadow rounded-lg p-4 cursor-pointer product-item" 
+                        <div class=" shadow rounded-lg p-4 cursor-pointer product-item"
                             data-id="{{ $product->id }}"
-                            data-name="{{ $product->name }}" 
+                            data-name="{{ $product->name }}"
                             data-price="{{ $product->unit_price }}"
-                            data-stock="{{ $product->product_Stock->stock ?? 0 }}" 
+                            data-stock="{{ $product->product_Stock->stock ?? 0 }}"
                             data-category-id="{{ $product->category_id }}">
 
                             <div class="h-[250px]">
                                 @if($product->image_path && file_exists(storage_path('app/public/' . $product->image_path)))
                                     <img src="{{ asset('storage/' . $product->image_path) }}"
-                                        class="w-full h-full object-cover rounded mb-2" 
+                                        class="w-full h-full object-cover rounded mb-2"
                                         alt="{{ $product->name }}"
                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
                                 @else

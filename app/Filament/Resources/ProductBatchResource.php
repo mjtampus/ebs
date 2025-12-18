@@ -9,6 +9,8 @@ use Filament\Tables\Table;
 use App\Models\ProductBatch;
 use Filament\Resources\Resource;
 use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Collection;
 use App\Filament\Resources\ProductBatchResource\Pages;
 
 class ProductBatchResource extends Resource
@@ -88,11 +90,30 @@ class ProductBatchResource extends Resource
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                ->label('mark as expired')
+                ->icon('heroicon-o-exclamation-triangle'),
                 Tables\Actions\RestoreAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('bulkExpire')
+                        ->label('Mark as Expired')
+                        ->icon('heroicon-o-clock')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Mark Batches as Expired')
+                        ->modalDescription('Are you sure you want to mark the selected batches as expired?')
+                        ->modalSubmitActionLabel('Yes, Mark as Expired')
+                        ->action(function (Collection $records) {
+
+                            \Log::info('hellow');
+
+                            Notification::make()
+                                ->title('Batches marked as expired')
+                                ->success()
+                                ->send();
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),

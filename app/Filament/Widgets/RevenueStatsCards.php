@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\ExpenseList;
 use App\Models\Transaction;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Card;
@@ -17,11 +18,13 @@ class RevenueStatsCards extends BaseWidget
         $today = now()->toDateString();
 
         // Daily totals
-        $todayRevenue = Transaction::whereDate('created_at', $today)->sum('total_amount');
+        $transaction = Transaction::whereDate('created_at', $today)->sum('total_amount');
+        $expenselist = ExpenseList::whereDate('created_at', $today)->sum('total_amount');
+        $todayRevenue = $transaction - $expenselist;
         $todayTransactions = Transaction::whereDate('created_at', $today)->count();
 
         // Average sales per transaction today
-        $averageSales = $todayTransactions > 0 ? $todayRevenue / $todayTransactions : 0;
+        $averageSales = $todayTransactions > 0 ? $transaction / $todayTransactions : 0;
 
         // Peak sales hour today (hour with max transactions)
         $peakHour = Transaction::select(DB::raw('HOUR(created_at) as hour'), DB::raw('COUNT(*) as count'))

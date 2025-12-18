@@ -26,7 +26,7 @@ class ProductStock extends Model
 
     public function stockMovements(): HasMany
     {
-        return $this->hasMany(StockMovements::class);
+        return $this->hasMany(StockMovements::class, 'product_stocks_id');
     }
 
     public function batch()
