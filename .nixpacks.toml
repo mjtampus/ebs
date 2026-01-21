@@ -1,4 +1,5 @@
 [phases.setup]
+# System packages needed for PHP extensions
 aptPkgs = [
   "libicu-dev",
   "libzip-dev",
@@ -8,6 +9,26 @@ aptPkgs = [
 
 [phases.build]
 cmds = [
-  "docker-php-ext-install intl zip",
-  "composer install --optimize-autoloader --no-interaction"
+  # Install required PHP extensions
+  "install-php-extensions intl zip",
+  
+  # Install composer dependencies
+  "composer install --optimize-autoloader --no-interaction",
+  
+  # Build frontend assets if you have Node
+  "npm install",
+  "npm run build"
 ]
+
+[phases.deploy]
+cmds = [
+  # Cache config, routes, views in Laravel
+  "php artisan config:cache",
+  "php artisan route:cache",
+  "php artisan view:cache"
+]
+
+[env]
+# Optional environment variables
+APP_ENV = "production"
+APP_DEBUG = "false"
