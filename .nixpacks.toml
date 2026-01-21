@@ -1,34 +1,43 @@
+# .nixpacks.toml
 [phases.setup]
-# System packages needed for PHP extensions
+# System packages needed for PHP extensions and Laravel/Node build
 aptPkgs = [
-  "libicu-dev",
-  "libzip-dev",
+  "libicu-dev",   # for intl
+  "libzip-dev",   # for zip
   "zip",
-  "unzip"
+  "unzip",
+  "git",
+  "curl",
+  "nodejs",
+  "npm"
 ]
 
 [phases.build]
 cmds = [
   # Install required PHP extensions
-  "install-php-extensions intl zip",
-  
-  # Install composer dependencies
+  "install-php-extensions intl zip ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml",
+
+  # Install Composer dependencies
   "composer install --optimize-autoloader --no-interaction",
-  
-  # Build frontend assets if you have Node
+
+  # Install Node packages
   "npm install",
+
+  # Build frontend assets
   "npm run build"
 ]
 
 [phases.deploy]
 cmds = [
-  # Cache config, routes, views in Laravel
+  # Prepare Laravel caches and storage
+  "mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache",
+  "chmod -R a+rw storage",
   "php artisan config:cache",
   "php artisan route:cache",
-  "php artisan view:cache"
+  "php artisan view:cache",
+  "php artisan event:cache"
 ]
 
 [env]
-# Optional environment variables
 APP_ENV = "production"
 APP_DEBUG = "false"
