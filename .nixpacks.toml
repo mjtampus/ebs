@@ -1,37 +1,40 @@
 # .nixpacks.toml
 [phases.setup]
-# System packages needed for PHP extensions and Laravel/Node build
+# System packages needed for PHP extensions and Laravel/Node
 aptPkgs = [
-  "libicu-dev",   # for intl
-  "libzip-dev",   # for zip
-  "zip",
-  "unzip",
   "git",
   "curl",
+  "zip",
+  "unzip",
+  "libicu-dev",
+  "libzip-dev",
   "nodejs",
   "npm"
 ]
 
 [phases.build]
 cmds = [
-  # Install required PHP extensions
+  # Make sure system packages are up-to-date
+  "apt-get update && apt-get install -y libicu-dev libzip-dev zip unzip",
+
+  # Install required PHP extensions (intl and zip for Filament/OpenSpout)
   "install-php-extensions intl zip ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml",
 
   # Install Composer dependencies
   "composer install --optimize-autoloader --no-interaction",
 
-  # Install Node packages
+  # Install Node packages and build frontend
   "npm install",
-
-  # Build frontend assets
   "npm run build"
 ]
 
 [phases.deploy]
 cmds = [
-  # Prepare Laravel caches and storage
+  # Ensure Laravel storage and cache directories exist and are writable
   "mkdir -p storage/framework/{sessions,views,cache,testing} storage/logs bootstrap/cache",
   "chmod -R a+rw storage",
+
+  # Laravel caching
   "php artisan config:cache",
   "php artisan route:cache",
   "php artisan view:cache",
