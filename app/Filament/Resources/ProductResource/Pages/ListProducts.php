@@ -9,19 +9,19 @@ use App\Filament\Resources\ProductBatchResource\Traits\HasParentResource;
 
 class ListProducts extends ListRecords
 {
-    use HasParentResource;
-
     protected static string $resource = ProductResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()
-                ->url(
-                    fn (): string => static::getParentResource()::getUrl('products.create', [
-                        'parent' => $this->parent,
-                    ])
-                ),
+            Actions\CreateAction::make(),
         ];
     }
+
+    // protected function getHeaderWidgets(): array
+    // {
+    //     return [
+    //         \App\Http\Livewire\CashierOpeningFloat::class, // This will auto-check and pop modal if needed
+    //     ];
+    // }
 }

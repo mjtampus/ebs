@@ -38,12 +38,11 @@ class ProductStockResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $above = ProductStock::whereHas('product.batch', fn($q) => $q->where('expiration_date', '>', now()))
-                    ->where('stock', '>=', 10)
+        $above = ProductStock::
+                    where('stock', '>=', 10)
                     ->count();
 
-        $below = ProductStock::whereHas('product.batch', fn($q) => $q->where('expiration_date', '>', now()))
-                    ->where('stock', '<', 10)
+        $below = ProductStock::where('stock', '<', 10)
                     ->count();
 
         return "↑ $above | $below ↓";
@@ -117,6 +116,19 @@ class ProductStockResource extends Resource
                                 ->default(0),
                         ])->columns(2),
 
+                        Forms\Components\Select::make('product_batch_id')
+                            ->label('Batch')
+                            ->options(function (callable $get) {
+                                $productId = $get('product_id');
+                                if (!$productId) return [];
+                                return \App\Models\ProductBatch::where('product_id', $productId)
+                                    ->pluck('batch_number', 'id');
+                            })
+                            ->searchable()
+                            ->required()
+                            ->reactive()
+                            ->helperText('Only shows batches for the selected product.'),
+
                         Forms\Components\Placeholder::make('product_image_preview')
                         ->label('Product Image')
                         ->content(function ($get) {
@@ -147,17 +159,18 @@ class ProductStockResource extends Resource
                             : $data['stock'];
 
                         $stockRecord->product_code = $data['product_code'];
+                        $stockRecord->product_batch_id = $data['product_batch_id'];
                         $stockRecord->stock = ($stockRecord->exists ? $stockRecord->stock : 0) + $change;
                         $stockRecord->save();
 
-                        StockMovements::create([
-                            'product_id' => $data['product_id'],
-                            'product_stocks_id' => $stockRecord->id,
-                            'product_code' => $data['product_code'],
-                            'movement_type' => $data['movement_type'],
-                            'quantity' => $data['stock'],
-                        ]);
-                        $action->success();
+                        // StockMovements::create([
+                        //     'product_id' => $data['product_id'],
+                        //     'product_stocks_id' => $stockRecord->id,
+                        //     'product_code' => $data['product_code'],
+                        //     'movement_type' => $data['movement_type'],
+                        //     'quantity' => $data['stock'],
+                        // ]);
+                        // $action->success();
                     })
                     ->successNotificationTitle('Stock Updated Successfully')
                     ->failureNotificationTitle('Failed to Update Stock')
@@ -196,10 +209,10 @@ class ProductStockResource extends Resource
                     ->numeric()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('product.batch.batch_number')
-                    ->label('Batch Number')
-                    ->searchable()
-                    ->sortable(), 
+                Tables\Columns\TextColumn::make('batch.batch_number')
+                    ->label('Batch Name')
+                    ->sortable()
+                    ->searchable(),
 
                 Tables\Columns\TextColumn::make('restock_status')
                     ->label('Restock Status')

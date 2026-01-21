@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use Livewire\Livewire;
 use App\Models\Product;
+use App\Models\ProductBatch;
 use App\Observers\ProductObserver;
+use App\Observers\ProductBatchObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Product::observe(ProductObserver::class);
+        ProductBatch::observe(ProductBatchObserver::class);
+        
     }
+    
 }

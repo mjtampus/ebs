@@ -100,9 +100,9 @@ class Product extends Model
         return $this->hasMany(ExpenseList::class);
     }
 
-    public function batch(): BelongsTo
+    public function batch(): HasMany
     {
-        return $this->belongsTo(ProductBatch::class, 'product_batch_id');
+        return $this->hasMany(ProductBatch::class, 'product_id');
     }
 
     protected static function booted()
@@ -115,9 +115,9 @@ class Product extends Model
             }
         });
 
-        // Global scope: only include products whose batch is not expired
-        static::addGlobalScope('non_expired_batch', function (Builder $builder) {
-            $builder->whereHas('batch', fn($q) => $q->where('expiration_date', '>', now()));
-        });
+        // // Global scope: only include products whose batch is not expired
+        // static::addGlobalScope('non_expired_batch', function (Builder $builder) {
+        //     $builder->whereHas('batch', fn($q) => $q->where('expiration_date', '>', now()));
+        // });
     }
 }

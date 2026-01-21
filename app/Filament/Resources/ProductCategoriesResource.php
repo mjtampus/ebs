@@ -14,6 +14,7 @@ use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ProductCategoriesResource\Pages;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductCategoriesResource extends Resource
 {
@@ -87,12 +88,12 @@ class ProductCategoriesResource extends Resource
                 // Add category-specific filters here
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                // Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                // Tables\Actions\BulkActionGroup::make([
+                //     Tables\Actions\DeleteBulkAction::make(),
+                // ]),
             ]);
     }
 
@@ -115,5 +116,20 @@ class ProductCategoriesResource extends Resource
     public static function canAccess() :bool
     {
         return Auth::user()->role === 'admin';
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canEdit(Model $record): bool
+    {
+        return false;
     }
 }

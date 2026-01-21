@@ -1,0 +1,13 @@
+[phases.setup]
+aptPkgs = [
+  "libicu-dev",
+  "libzip-dev",
+  "zip",
+  "unzip"
+]
+
+[phases.build]
+cmds = [
+  "docker-php-ext-install intl zip",
+  "composer install --optimize-autoloader --no-interaction"
+]

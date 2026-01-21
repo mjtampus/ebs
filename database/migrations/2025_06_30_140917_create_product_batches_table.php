@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('product_batches', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('batch_number')->nullable();
             $table->string('batch_code')->nullable();
-            $table->date('expiration_date')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

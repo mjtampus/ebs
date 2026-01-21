@@ -1,10 +1,10 @@
 // Initialize with Livewire data
-document.addEventListener('livewire:init', () => {
+document.addEventListener("livewire:init", () => {
     // Wait for cashier data to be loaded
-    Livewire.on('cashierDataLoaded', (cashierData) => {
+    Livewire.on("cashierDataLoaded", (cashierData) => {
         // Main POS variables
-         window.cashierData = cashierData;
-         console.log("cashierData",cashierData)
+        window.cashierData = cashierData;
+        console.log("cashierData", cashierData);
         let currentOrder = [];
         let paymentAmount = 0;
         let paymentInput = "";
@@ -27,13 +27,31 @@ document.addEventListener('livewire:init', () => {
         updateOrderDisplay();
         updatePaymentDisplay();
 
+        // Helper function to check if modal is open
+        function isModalOpen() {
+            // Check if opening float modal is visible
+            const modalElement = document.querySelector('[wire\\:loading\\.remove]') || 
+                                document.querySelector('.fixed.inset-0.flex.items-center');
+            return modalElement !== null;
+        }
+
         // ============ KEYBOARD EVENT LISTENERS ============
-        document.addEventListener("keydown", function(event) {
-            // Only handle keyboard input when not typing in search box
-            if (document.activeElement === productSearch) return;
-            
+        document.addEventListener("keydown", function (event) {
+            // Don't handle keyboard shortcuts if:
+            // 1. User is typing in search box
+            // 2. Modal is open
+            // 3. User is in any input/textarea field
+            if (
+                document.activeElement === productSearch ||
+                isModalOpen() ||
+                document.activeElement.tagName === 'INPUT' ||
+                document.activeElement.tagName === 'TEXTAREA'
+            ) {
+                return;
+            }
+
             const key = event.key;
-            
+
             // Handle numbers (0-9)
             if (/^[0-9]$/.test(key)) {
                 event.preventDefault();
@@ -41,7 +59,7 @@ document.addEventListener('livewire:init', () => {
                 updatePaymentDisplay();
                 return;
             }
-            
+
             // Handle decimal point
             if (key === "." && !paymentInput.includes(".")) {
                 event.preventDefault();
@@ -49,7 +67,7 @@ document.addEventListener('livewire:init', () => {
                 updatePaymentDisplay();
                 return;
             }
-            
+
             // Handle Backspace
             if (key === "Backspace") {
                 event.preventDefault();
@@ -57,7 +75,7 @@ document.addEventListener('livewire:init', () => {
                 updatePaymentDisplay();
                 return;
             }
-            
+
             // Handle Delete or Clear (Delete key or Escape)
             if (key === "Delete" || key === "Escape") {
                 event.preventDefault();
@@ -66,7 +84,7 @@ document.addEventListener('livewire:init', () => {
                 updatePaymentDisplay();
                 return;
             }
-            
+
             // Handle Enter to complete payment
             if (key === "Enter") {
                 event.preventDefault();
@@ -75,9 +93,9 @@ document.addEventListener('livewire:init', () => {
                 }
                 return;
             }
-            
+
             // Handle F1-F9 for quick product selection (first 9 products)
-            if (event.key.startsWith('F') && event.key.length === 2) {
+            if (event.key.startsWith("F") && event.key.length === 2) {
                 const fNumber = parseInt(event.key.substring(1));
                 if (fNumber >= 1 && fNumber <= 9) {
                     event.preventDefault();
@@ -88,7 +106,7 @@ document.addEventListener('livewire:init', () => {
                 }
                 return;
             }
-            
+
             // Handle Ctrl+Z for removing last item from order
             if (event.ctrlKey && key === "z") {
                 event.preventDefault();
@@ -98,7 +116,7 @@ document.addEventListener('livewire:init', () => {
                 }
                 return;
             }
-            
+
             // Handle Ctrl+A for clearing entire order
             if (event.ctrlKey && key === "a") {
                 event.preventDefault();
@@ -110,16 +128,6 @@ document.addEventListener('livewire:init', () => {
             }
         });
 
-        // Prevent search box from losing focus when using keyboard shortcuts
-        productSearch.addEventListener("blur", function() {
-            // Small delay to allow keyboard shortcuts to work
-            setTimeout(() => {
-                if (!document.activeElement || document.activeElement === document.body) {
-                    // Don't auto-focus if user clicked somewhere else intentionally
-                }
-            }, 100);
-        });
-
         // ============ EXISTING EVENT LISTENERS ============
         productItems.forEach((item, index) => {
             item.addEventListener("click", function () {
@@ -127,18 +135,20 @@ document.addEventListener('livewire:init', () => {
                     id: this.dataset.id,
                     name: this.dataset.name,
                     price: parseFloat(this.dataset.price),
+                    stock: parseInt(this.dataset.stock),
                     quantity: 1,
                 };
                 addToOrder(product);
             });
-            
+
             // Add F-key hint to first 9 products
             if (index < 9) {
-                const fKeyHint = document.createElement('div');
-                fKeyHint.className = 'absolute top-1 right-1 bg-blue-500 text-white text-xs px-1 rounded';
+                const fKeyHint = document.createElement("div");
+                fKeyHint.className =
+                    "absolute top-1 right-1 bg-blue-500 text-white text-xs px-1 rounded";
                 fKeyHint.textContent = `F${index + 1}`;
-                fKeyHint.style.fontSize = '10px';
-                item.style.position = 'relative';
+                fKeyHint.style.fontSize = "10px";
+                item.style.position = "relative";
                 item.appendChild(fKeyHint);
             }
         });
@@ -177,7 +187,9 @@ document.addEventListener('livewire:init', () => {
 
         // Core functions
         function addToOrder(product) {
-            const existingItem = currentOrder.find((item) => item.id === product.id);
+            const existingItem = currentOrder.find(
+                (item) => item.id === product.id
+            );
             if (existingItem) existingItem.quantity += 1;
             else currentOrder.push({ ...product });
             updateOrderDisplay();
@@ -203,39 +215,49 @@ document.addEventListener('livewire:init', () => {
                         total_price: item.price * item.quantity,
                     })),
                 };
-                        console.log("orderData",orderData)
+                console.log("orderData", orderData);
                 paymentAmount += enteredAmount;
                 paymentInput = "";
-                
+
                 fetch("/api/transactions", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Accept": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                        Accept: "application/json",
+                        "X-CSRF-TOKEN": document.querySelector(
+                            'meta[name="csrf-token"]'
+                        ).content,
                     },
                     body: JSON.stringify(orderData),
                 })
-                .then(handleResponse)
-                .then(data => {
-                    showSuccess(data, change);
-                    resetOrder();
-                })
-                .catch(handleError);
+                    .then(handleResponse)
+                    .then((data) => {
+                        showSuccess(data, change);
+                        resetOrder();
+                    })
+                    .catch(handleError);
             } else {
-                alert(`Insufficient payment! Need PHP ${(total - totalPayment).toFixed(2)} more.`);
+                showToast(
+                    `Insufficient payment! Need PHP ${(
+                        total - totalPayment
+                    ).toFixed(2)} more.`
+                );
             }
         }
 
         function handleResponse(response) {
             if (!response.ok) {
-                return response.text().then(text => { throw new Error(text) });
+                return response.text().then((text) => {
+                    throw new Error(text);
+                });
             }
             return response.json();
         }
 
         function showSuccess(data, change) {
-            alert(`Order #${data.id} completed! Change: PHP ${change.toFixed(2)}`);
+            showToast(
+                `Order #${data.id} completed! Change: PHP ${change.toFixed(2)}`
+            );
         }
 
         function resetOrder() {
@@ -248,7 +270,7 @@ document.addEventListener('livewire:init', () => {
 
         function handleError(error) {
             console.error("Error:", error);
-            alert(error.message || "Error saving order");
+            showToast(error.message || "Error saving order");
         }
 
         function updateOrderDisplay() {
@@ -277,15 +299,25 @@ document.addEventListener('livewire:init', () => {
             document.querySelectorAll(".decrease-qty").forEach((btn) => {
                 btn.onclick = () => {
                     const i = +btn.dataset.index;
-                    if (currentOrder[i].quantity > 1) currentOrder[i].quantity--;
+                    if (currentOrder[i].quantity > 1)
+                        currentOrder[i].quantity--;
                     updateOrderDisplay();
                 };
             });
 
             document.querySelectorAll(".increase-qty").forEach((btn) => {
                 btn.onclick = () => {
-                    currentOrder[+btn.dataset.index].quantity++;
-                    updateOrderDisplay();
+                    const i = +btn.dataset.index;
+                    const item = currentOrder[i];
+
+                    if (item.quantity < item.stock) {
+                        item.quantity++;
+                        updateOrderDisplay();
+                    } else {
+                        showToast(
+                            `Cannot increase quantity. Only ${item.stock} ${item.name} available in stock.`
+                        );
+                    }
                 };
             });
 
@@ -310,24 +342,33 @@ document.addEventListener('livewire:init', () => {
             const change = totalPayment - total;
 
             displayReceived.textContent = `PHP ${totalPayment.toFixed(2)}`;
-            displayChange.textContent = `PHP ${change > 0 ? change.toFixed(2) : "0.00"}`;
+            displayChange.textContent = `PHP ${
+                change > 0 ? change.toFixed(2) : "0.00"
+            }`;
 
             // Update payment button state
             const hasOrder = currentOrder.length > 0;
             const isPaymentSufficient = totalPayment >= total;
             const isValidPayment = !isNaN(currentInput);
 
-            completePaymentButton.disabled = !hasOrder || !isValidPayment || !isPaymentSufficient;
+            completePaymentButton.disabled =
+                !hasOrder || !isValidPayment || !isPaymentSufficient;
 
             // Visual feedback
             if (completePaymentButton.disabled) {
-                completePaymentButton.classList.add("opacity-50", "cursor-not-allowed");
+                completePaymentButton.classList.add(
+                    "opacity-50",
+                    "cursor-not-allowed"
+                );
                 completePaymentButton.classList.remove("opacity-100");
             } else {
-                completePaymentButton.classList.remove("opacity-50", "cursor-not-allowed");
+                completePaymentButton.classList.remove(
+                    "opacity-50",
+                    "cursor-not-allowed"
+                );
                 completePaymentButton.classList.add("opacity-100");
             }
-            
+
             // Visual feedback for current payment input
             if (paymentInput) {
                 displayReceived.parentElement.classList.add("bg-yellow-500");
@@ -337,7 +378,10 @@ document.addEventListener('livewire:init', () => {
         }
 
         function calculateTotal() {
-            return currentOrder.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            return currentOrder.reduce(
+                (sum, item) => sum + item.price * item.quantity,
+                0
+            );
         }
 
         function filterProducts(searchTerm = "", category = "all") {
@@ -345,15 +389,19 @@ document.addEventListener('livewire:init', () => {
                 const name = item.dataset.name.toLowerCase();
                 const itemCategory = item.dataset.categoryId;
 
-                const matchesSearch = searchTerm ? name.includes(searchTerm) : true;
-                const matchesCategory = category === "all" || itemCategory === category;
-                item.style.display = matchesSearch && matchesCategory ? "block" : "none";
+                const matchesSearch = searchTerm
+                    ? name.includes(searchTerm)
+                    : true;
+                const matchesCategory =
+                    category === "all" || itemCategory === category;
+                item.style.display =
+                    matchesSearch && matchesCategory ? "block" : "none";
             });
         }
 
         // ============ SHOW KEYBOARD SHORTCUTS HELP ============
         function showKeyboardHelp() {
-            alert(`Keyboard Shortcuts:
+            showToast(`Keyboard Shortcuts:
             
 PAYMENT:
 • 0-9: Enter payment amount
@@ -372,20 +420,74 @@ ORDER MANAGEMENT:
 SEARCH:
 • Click search box to search products normally`);
         }
-        
-        // Add help button (you can add this to your HTML)
-        // <button onclick="showKeyboardHelp()" class="text-xs text-blue-500">Show Keyboard Shortcuts</button>
+
         window.showKeyboardHelp = showKeyboardHelp;
-        
+
         // Show help on page load (optional)
-        console.log("💡 Keyboard shortcuts enabled! Press Ctrl+H or check console for help.");
-        
+        console.log(
+            "💡 Keyboard shortcuts enabled! Press Ctrl+H or check console for help."
+        );
+
         // Optional: Add Ctrl+H for help
-        document.addEventListener("keydown", function(event) {
+        document.addEventListener("keydown", function (event) {
             if (event.ctrlKey && event.key === "h") {
                 event.preventDefault();
                 showKeyboardHelp();
             }
         });
+
+        Livewire.on('floatSaved', () => {
+            showToast('Opening float saved successfully!', 'success');
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            // Remove any existing toasts
+            const existingToast = document.getElementById('pos-toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.id = 'pos-toast';
+            toast.className = `fixed top-4 right-4 px-6 py-4 rounded-lg shadow-lg z-[9999] transform transition-all duration-300 ease-in-out ${
+                type === 'success' 
+                    ? 'bg-green-500 text-white' 
+                    : type === 'error'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-blue-500 text-white'
+            }`;
+            toast.style.minWidth = '300px';
+            toast.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${type === 'success' 
+                            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'
+                            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'
+                        }
+                    </svg>
+                    <span class="font-medium">${message}</span>
+                </div>
+            `;
+
+            // Add to body
+            document.body.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        window.showToast = showToast;
     });
 });

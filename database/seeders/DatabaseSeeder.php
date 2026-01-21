@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
     {
 
         $this->call(ProductCategories::class);
+        $this->call(ProductSeeder::class);
+        $this->call(ProductBatchSeeder::class);
         // User::factory(10)->create();
 
         User::factory()->create([
@@ -28,6 +30,19 @@ class DatabaseSeeder extends Seeder
             'contact' => '1234567890',
             'gender' => 'male',
             
+        ]);
+
+        User::factory()->create([
+            'name' => 'cashier',
+            'email' => 'cashier@example.com',
+            'role' => 'cashier',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+            'contact' => '09434244877',
+            'gender' => 'male',
+            'shift' => 'day',
+            'shift_start' => '08:00',
+            'shift_end' => '17:00',
         ]);
     }
 }

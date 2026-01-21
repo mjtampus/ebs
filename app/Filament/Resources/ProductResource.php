@@ -5,328 +5,236 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
+use Filament\Infolists;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
-use App\Models\ProductCategory;
-use Filament\Resources\Resource;
-use App\Models\ProductCategories;
-use Filament\Resources\Pages\Page;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Wizard;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Tabs\Tab;
-use Filament\Forms\Components\Textarea;
-use Illuminate\Database\Eloquent\Model;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\ImageColumn;
-use Filament\Forms\Components\FileUpload;
-use Filament\Pages\SubNavigationPosition;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Contracts\Support\Htmlable;
-use App\Filament\Resources\ProductBatchResource;
+use Filament\Infolists\Infolist;
+use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
 use App\Filament\Resources\ProductResource\Pages;
-use App\Filament\Resources\BatchRelationManagerResource\RelationManagers\ProductIdRelationManager;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductResource extends Resource
 {
-    public static string $parentResource= ProductBatchResource::class;
     protected static ?string $model = Product::class;
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
-    protected static ?string $navigationGroup = null;
-    // protected static bool $shouldRegisterNavigation = false;
-    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationIcon = 'heroicon-o-cake';
 
+    protected static ?string $navigationGroup = 'Bakery';
 
-    public static function shouldRegisterNavigation(): bool
+    protected static ?string $navigationLabel = 'Breads';
+
+    protected static ?string $modelLabel = 'Bread';
+
+    protected static ?string $pluralModelLabel = 'Breads';
+
+    public static function getEloquentQuery(): Builder
     {
-        return false;
-    }
-
-    public static function getRecordTitle(?Model $record): string|null|Htmlable
-    {
-        return $record->name;
+        return parent::getEloquentQuery()
+            ->with('product_category') // eager-load category to avoid N+1
+            ->whereHas('product_category', function (Builder $query) {
+                $query->where('type', 'Bread');
+            });
     }
 
     public static function form(Form $form): Form
     {
-        return $form->schema([
-            Wizard::make([
-                // Step 1: Product Info
-                Wizard\Step::make('Product Info')
+        return $form
+            ->schema([
+                Forms\Components\Section::make('Bread Details')
+                    ->description('Basic information about your bread product')
+                    ->icon('heroicon-o-information-circle')
                     ->schema([
-                        Grid::make(2)->schema([
-                            TextInput::make('name')
-                                ->label('Product Name')
-                                ->required()
-                                ->maxLength(255)
-                                ->reactive()
-                                ->lazy()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $prefix = strtoupper(substr($state, 0, 3));
-                                    $random = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-                                    $code = "{$prefix}-{$random}";
-                                    $set('code', $code);
-                                    $set('product_stock.product_code', $code);
-                                }),
-                            TextInput::make('code')
-                                ->label('Product Code')
-                                ->required()
-                                ->maxLength(255)
-                                ->disabled()
-                                ->dehydrated(),
-                        ]),
-
-                        Textarea::make('description')
+                        Forms\Components\TextInput::make('name')
+                            ->label('Bread Name')
+                            ->placeholder('e.g., Whole Wheat Loaf')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('code')
+                            ->label('Product Code')
+                            ->placeholder('Leave empty to auto-generate.')
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true),
+                        Forms\Components\Textarea::make('description')
                             ->label('Description')
-                            ->required()
-                            ->maxLength(500),
+                            ->placeholder('Describe your bread product (ingredients, taste, etc.)')
+                            ->columnSpanFull()
+                            ->rows(4),
+                        Forms\Components\TextInput::make('category_id')
+                            ->hidden()
 
-                        // Only visible during edit
-                        Select::make('category_id')
-                            ->label('Category')
-                            ->relationship('product_category', 'type')
-                            ->searchable()
-                            ->preload()
-                            ->required()
-                            ->hidden(fn(string $operation) => $operation === 'create'),
+                    ])->columns(2),
 
-                        TextInput::make('unit_price')
-                            ->label('Unit Price')
-                            ->required()
-                            ->numeric()
-                            ->prefix('₱')
-                            ->rules(['numeric', 'min:0']),
-                    ]),
-
-                // Step 2: Image Upload
-                Wizard\Step::make('Image')
+                Forms\Components\Section::make('Bread Image')
+                    ->description('Upload a mouth-watering photo of your bread')
+                    ->icon('heroicon-o-photo')
                     ->schema([
-                        FileUpload::make('image_path')
-                            ->label('Product Image')
+                        Forms\Components\FileUpload::make('image_path')
                             ->image()
-                            ->required()
-                            ->directory('products'),
+                            ->imageResizeMode('cover')
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeTargetWidth(500)
+                            ->imageResizeTargetHeight(500)
+                            ->columnSpanFull(),
                     ]),
 
-                // Step 3: Category & Stock
-                Wizard\Step::make('Category & Stock')
+                Forms\Components\Section::make('Pricing & Unit')
+                    ->description('Set the price and unit of measurement')
+                    ->icon('heroicon-o-tag')
                     ->schema([
-                        Select::make('category_id')
-                            ->label('Category')
-                            ->relationship('product_category', 'type')
-                            ->searchable()
-                            ->preload()
+                        Forms\Components\TextInput::make('unit_price')
+                            ->label('Price')
+                            ->numeric()
+                            ->default(0)
+                            ->prefix('₱')
                             ->required()
-                            ->reactive(),
+                            ->step(0.01),
+                        Forms\Components\TextInput::make('unit')
+                            ->label('Unit')
+                            ->default('pcs')
+                            ->placeholder('e.g., pcs, loaf, pack')
+                            ->maxLength(255)
+                            ->required(),
+                    ])->columns(2),
 
-                        Section::make('Unit Details')
-                            ->visible(
-                                fn($get) =>
-                                ProductCategories::find($get('category_id'))?->has_unit === 1
-                            )
-                            ->schema([
-                                Select::make('SI')
-                                    ->label('SI Unit')
-                                    ->options([
-                                        'pcs' => 'Pieces',
-                                        'kg' => 'Kilograms',
-                                        'ltr' => 'Liters',
-                                        'custom' => 'Custom',
-                                    ])
-                                    ->default('pcs')
-                                    ->reactive()
-                                    ->afterStateHydrated(function ($component, $state, callable $get, callable $set) {
-                                        $unit = $get('unit');
-                                        if ($state === 'custom') {
-                                            return;
-                                        }
-
-                                        if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
-                                            $si = strtolower($matches[1]);
-                                            if (in_array($si, ['pcs', 'kg', 'ltr'])) {
-                                                $set('SI', $si);
-                                            }
-                                        }
-                                    }),
-
-                                TextInput::make('custom_unit')
-                                ->label('Custom Unit')
-                                ->visible(fn($get) => $get('SI') === 'custom')
-                                ->reactive()
-                                ->afterStateHydrated(function ($component, $state, callable $get, callable $set) {
-                                    $unit = $get('unit');
-                                    if (preg_match('/\d+\s*(\w+)/', $unit, $matches)) {
-                                        $custom_unit = $matches[1];
-                                        $set('custom_unit', $custom_unit);
-                                    }
-                                }),
-
-                                TextInput::make('unit')
-                                    ->label('SI Quantity')
-                                    ->numeric()
-                                    ->visible(fn($get) => filled($get('SI')))
-                                    ->afterStateHydrated(function ($component, $state) {
-                                        if (preg_match('/^(\d+)/', $state, $matches)) {
-                                            $component->state((int) $matches[1]);
-                                        }
-                                    })
-                                    ->dehydrated()
-                                    ->reactive()
-                                    ->suffix(fn($get) => $get('SI') === 'custom' ? $get('custom_unit') : $get('SI'))
-                                    ->helperText('Enter the quantity and select the SI unit. This will be combined with the SI unit. For example, "10 pcs" or "5 kg".')
-                                    ->extraAttributes(['inputmode' => 'numeric']),
-                            ]),
-
-
-                        Section::make('Stock Information')
-                            ->relationship('product_stock')
-                            ->schema([
-                                TextInput::make('stock')
-                                    ->label('Stock Quantity')
-                                    ->required()
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->default(0)
-                                    ->hidden(fn(string $operation) => $operation === 'edit'),
-
-                                TextInput::make('product_code')
-                                    ->label('Product Code')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->disabled()
-                                    ->dehydrated(),
-                            ]),
-                    ]),
-            ])
-                ->columnSpanFull(),
-        ]);
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                ImageColumn::make('image_path')
-                    ->label('Image')
-                    ->url(fn($record) => asset('storage/' . $record->image_path))
-                    ->getStateUsing(fn($record) => asset('storage/' . $record->image_path))
-                    ->square()
+                Tables\Columns\ImageColumn::make('image_path')
+                    ->label('Photo')
                     ->circular(),
-
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label('Bread Name')
                     ->searchable()
-                    ->sortable(),
-
+                    ->sortable()
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('code')
                     ->label('Code')
                     ->searchable()
-                    ->sortable(),
-
+                    ->sortable()
+                    ->badge(),
                 Tables\Columns\TextColumn::make('description')
-                    ->limit(30)
-                    ->tooltip(fn($record) => $record->description),
-
-                Tables\Columns\TextColumn::make('product_category.type')
-                    ->label('Category')
-                    ->sortable()
-                    ->badge()
-                    ->color('info'),
-
+                    ->label('Description')
+                    ->limit(50)
+                    ->tooltip(fn (Product $record): string => $record->description ?? ''),
                 Tables\Columns\TextColumn::make('unit_price')
-                    ->label('Unit Price')
+                    ->label('Price')
+                    ->numeric()
                     ->sortable()
-                    ->money('PHP', true)
-                    ->color('primary'),
-
+                    ->prefix('₱')
+                    ->weight('bold')
+                    ->color('success'),
                 Tables\Columns\TextColumn::make('unit')
                     ->label('Unit')
-                    ->sortable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('batch_count')
+                    ->label('Batches')
+                    ->counts('batch')
                     ->badge()
-                    ->color('secondary'),
-
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
-                    ->dateTime('d M Y, h:i A')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Updated')
-                    ->dateTime('d M Y, h:i A')
+                    ->label('Added')
+                    ->dateTime('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('name')
             ->filters([
-                Tables\Filters\SelectFilter::make('product_category_id')
-                    ->label('Category')
-                    ->relationship('product_category', 'type')
-                    ->searchable()
-                    ->preload(),
-                Tables\Filters\TrashedFilter::make()
-                    ->visible(fn() => auth()->user()?->role === 'admin'),
+                Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
-                    ->visible(fn() => auth()->user()?->role === 'admin')
-                    ->url(
-                        fn (Pages\ListProducts $livewire, Model $record): string => static::$parentResource::getUrl('products.edit', [
-                            'record' => $record,
-                            'parent' => $livewire->parent,
-                        ])
-                    ),
-                Tables\Actions\DeleteAction::make()->visible(fn() => auth()->user()?->role === 'admin'),
+                ->label('Add Stock / Edit Bread'),
+                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ViewAction::make()->visible(fn() => auth()->user()?->role !== 'admin'),
-                Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
+            ])
+            ->emptyStateActions([
+                Tables\Actions\CreateAction::make(),
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Bread Information')
+                    ->schema([
+                        Infolists\Components\ImageEntry::make('image_path')
+                            ->label(''),
+                        Infolists\Components\Group::make()
+                            ->schema([
+                                Infolists\Components\TextEntry::make('name')
+                                    ->label('Bread Name')
+                                    ->size('lg')
+                                    ->weight('bold'),
+                                Infolists\Components\TextEntry::make('code')
+                                    ->label('Product Code')
+                                    ->badge(),
+                                Infolists\Components\TextEntry::make('description')
+                                    ->label('Description'),
+                                Infolists\Components\TextEntry::make('unit_price')
+                                    ->label('Price')
+                                    ->prefix('₱')
+                                    ->color('success'),
+                                Infolists\Components\TextEntry::make('unit')
+                                    ->label('Unit'),
+                            ])->columns(2),
+                    ])->columns(2),
+                Infolists\Components\Section::make('Batches')
+                    ->schema([
+                        Infolists\Components\RepeatableEntry::make('batch')
+                            ->schema([
+                                Infolists\Components\TextEntry::make('batch_number')
+                                    ->label('Batch Number'),
+                                Infolists\Components\TextEntry::make('batch_code')
+                                    ->label('Batch Code')
+                                    ->badge(),
+                                Infolists\Components\TextEntry::make('created_at')
+                                    ->label('Created')
+                                    ->dateTime(),
+                            ])->columns(3),
+                    ]),
+            ]);
+    }
+
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
 
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\ProductResource\RelationManagers\ProductBatchesRelationManager::class,
+            \App\Filament\Resources\ProductResource\RelationManagers\ProductStocksRelationManager::class, // ✅ add this
         ];
     }
+
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
-            auth()->user()?->role !== 'staff' ? Pages\EditProduct::route('/{record}/edit') : null,
-            'stock' => Pages\ProductStock::route('/{record}/stock'),
-            'cashier' => Pages\CashierListProducts::route('/cashier'),
+            'edit' => Pages\EditProduct::route('/{record}/edit'),
+            'cashier' => Pages\CashierListProducts::route('/cashier'), // 👈 add this
+
         ];
     }
 
-
-    // public static function getRecordSubNavigation(Page $page): array
-    // {
-    //     $items = [];
-
-    //     if (auth()->user()?->role !== 'staff') {
-    //         $items[] = Pages\EditProduct::class;
-    //     }
-
-    //     $items[] = Pages\ProductStock::class;
-
-    //     return $page->generateNavigationItems($items);
-    // }
-
-    public static function canCreate(): bool
+    public static function canAccess() :bool
     {
-        return auth()->user()?->role === 'admin';
+        return Auth::user()->role === 'cashier';
     }
-
 }

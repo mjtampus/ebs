@@ -1,5 +1,8 @@
+
 <x-filament::page>
-  @script
+    @livewire('cashier-opening-float')
+
+    @script
     <script>
         document.addEventListener('livewire:init', () => {
             Livewire.on('cashierDataLoaded', (data) => {
@@ -9,6 +12,7 @@
         });
     </script>
     @endscript
+    
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border ">
         <div class="grid grid-cols-1 gap-4">
@@ -93,36 +97,53 @@
                         </span>
                     @endforeach
                 </div>
-<input
-    type="text"
-    placeholder="Search Product..."
-    id="product-search"
-    class="w-full p-2 border rounded
+                <input type="text" placeholder="Search Product..." id="product-search" class="w-full p-2 border rounded
            bg-white text-black
            dark:bg-gray-800 dark:text-white
-           placeholder-gray-400 dark:placeholder-gray-300"
-/>
+           placeholder-gray-400 dark:placeholder-gray-300" />
 
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4" id="product-grid">
-                @foreach ($this->getProducts() as $product)
-                    @if ($product->unit === 'pcs')
-                        <div class=" shadow rounded-lg p-4 cursor-pointer product-item" data-id="{{ $product->id }}"
-                            data-name="{{ $product->name }}" data-price="{{ $product->unit_price }}"
+                @php
+                    $products = method_exists($this, 'getProducts') ? $this->getProducts() : collect([]);
+                @endphp
+                
+                @forelse ($products as $product)
+                    @if ($product->unit === 'pcs' && $product->product_Stock)
+                        <div class=" shadow rounded-lg p-4 cursor-pointer product-item" 
+                            data-id="{{ $product->id }}"
+                            data-name="{{ $product->name }}" 
+                            data-price="{{ $product->unit_price }}"
+                            data-stock="{{ $product->product_Stock->stock ?? 0 }}" 
                             data-category-id="{{ $product->category_id }}">
 
                             <div class="h-[250px]">
-                                <img src="{{ asset('storage/' . $product->image_path) }}"
-                                    class="w-full h-full object-cover rounded mb-2" alt="">
+                                @if($product->image_path && file_exists(storage_path('app/public/' . $product->image_path)))
+                                    <img src="{{ asset('storage/' . $product->image_path) }}"
+                                        class="w-full h-full object-cover rounded mb-2" 
+                                        alt="{{ $product->name }}"
+                                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22200%22 height=%22200%22/%3E%3Ctext fill=%22%23999%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+                                @else
+                                    <div class="w-full h-full bg-gray-200 dark:bg-gray-700 rounded mb-2 flex items-center justify-center">
+                                        <span class="text-gray-400 dark:text-gray-500">No Image</span>
+                                    </div>
+                                @endif
                             </div>
 
-
-                            <h2 class="font-bold text-lg">{{ $product->name }} {{ $product->category_id}}</h2>
+                            <h2 class="font-bold text-lg">{{ $product->name }}</h2>
                             <div class="mt-2 text-right font-bold">PHP {{ number_format($product->unit_price, 2) }}</div>
                         </div>
                     @endif
-                @endforeach
+                @empty
+                    <div class="col-span-full text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No products available</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by adding a new product.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
